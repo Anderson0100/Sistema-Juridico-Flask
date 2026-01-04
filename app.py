@@ -2,8 +2,11 @@ import os
 import re
 import uuid
 import mimetypes
+import os
 from dotenv import load_dotenv
-load_dotenv()
+
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 from datetime import timedelta
 from datetime import datetime 
 from google_calendar import get_auth_url, save_token, get_calendar_service, criar_evento_google
@@ -25,6 +28,13 @@ def arquivo_permitido(filename):
 
 
 app = Flask(__name__)
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+print("DATABASE_URL =", DATABASE_URL)
+
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL não foi carregado do .env")
 app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024   # 5MB por arquivo
 import secrets
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
