@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<h2>Editar Processo</h2>
+
+<form method="POST">
+  <select name="status">
+    <option {{ 'selected' if processo.status=='Em andamento' }}>Em andamento</option>
+    <option {{ 'selected' if processo.status=='Concluído' }}>Concluído</option>
+  </select>
+
+  <textarea name="observacoes">{{ processo.observacoes }}</textarea>
+
+  <button>Salvar</button>
+</form>
+
+{% endblock %}

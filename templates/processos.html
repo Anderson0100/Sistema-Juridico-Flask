@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<h2>📂 Processos</h2>
+
+<form method="GET" class="form-filtros" style="margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap;">
+    <input type="text" name="busca" placeholder="Buscar nº do processo" value="{{ filtros.busca or '' }}">
+
+    <select name="status">
+        <option value="">Todos os status</option>
+        <option value="Em andamento" {% if filtros.status == 'Em andamento' %}selected{% endif %}>Em andamento</option>
+        <option value="Concluído" {% if filtros.status == 'Concluído' %}selected{% endif %}>Concluído</option>
+    </select>
+
+    <select name="prioridade">
+        <option value="">Todas as prioridades</option>
+        <option value="Baixa" {% if filtros.prioridade == 'Baixa' %}selected{% endif %}>Baixa</option>
+        <option value="Normal" {% if filtros.prioridade == 'Normal' %}selected{% endif %}>Normal</option>
+        <option value="Urgente" {% if filtros.prioridade == 'Urgente' %}selected{% endif %}>🔥 Urgente</option>
+    </select>
+
+    <select name="cliente">
+        <option value="">Todos os clientes</option>
+        {% for c in clientes %}
+            <option value="{{ c.id }}" {% if filtros.cliente == c.id|string %}selected{% endif %}>
+                {{ c.nome }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <button type="submit" class="btn">🔍 Filtrar</button>
+</form>
+
+<table>
+    <thead>
+        <tr>
+            <th>Nº Processo</th>
+            <th>Status</th>
+            <th>Prioridade</th>
+            <th>Cliente</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for p in processos.items %}
+        <tr {% if p.prioridade == 'Urgente' %}style="border-left:5px solid #dc2626;"{% endif %}>
+            <td>{{ p.numero }}</td>
+
+            <td>
+                <span class="badge {% if p.status == 'Concluído' %}concluido{% else %}em-andamento{% endif %}">
+                    {{ p.status }}
+                </span>
+            </td>
+
+            <td>
+                {% if p.prioridade == 'Urgente' %}
+                    <span class="badge urgente">🔥 Urgente</span>
+                {% elif p.prioridade == 'Normal' %}
+                    <span class="badge normal">Normal</span>
+                {% else %}
+                    <span class="badge baixa">Baixa</span>
+                {% endif %}
+            </td>
+
+            <td>
+                {{ p.cliente.nome if p.cliente else '—' }}
+            </td>
+
+            <td style="display:flex; gap:8px;">
+    
+                <a href="{{ url_for('detalhe_processo', id=p.id) }}" class="btn btn-secondary">
+                    🔍 Ver
+                </a>
+
+                {% if tipo_usuario == "admin" or p.advogado_id == advogado_logado_id %}
+                    <form method="POST" action="{{ url_for('excluir_processo', id=p.id) }}" onsubmit="return confirm('Tem certeza que deseja excluir este processo?')">
+                        <button class="btn btn-danger">🗑 Excluir</button>
+                    </form>
+                {% endif %}
+
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="5">Nenhum processo encontrado</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="paginacao" style="margin-top:20px; display:flex; gap:10px; align-items:center;">
+    {% if processos.has_prev %}
+        <a href="{{ url_for('processos_advogado', page=processos.prev_num, **filtros) }}" class="btn btn-secondary">← Anterior</a>
+    {% endif %}
+
+    <span>Página {{ processos.page }} de {{ processos.pages }}</span>
+
+    {% if processos.has_next %}
+        <a href="{{ url_for('processos_advogado', page=processos.next_num, **filtros) }}" class="btn btn-secondary">Próxima →</a>
+    {% endif %}
+</div>
+
+{% endblock %}

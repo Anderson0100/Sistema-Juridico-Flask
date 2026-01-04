@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<h2>⚖️ Processo {{ processo.numero }}</h2>
+
+<!-- ALERTAS -->
+{% if alertas %}
+<div class="alerta-topo">
+    {% for alerta in alertas %}
+        <div class="alerta-box">⚠️ {{ alerta }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- CARDS DO PROCESSO -->
+<div class="cards">
+    <div class="card">
+        <h3>Status</h3>
+        <span class="badge {% if processo.status == 'Concluído' %}concluido{% else %}em-andamento{% endif %}">
+            {{ processo.status }}
+        </span>
+    </div>
+
+    <div class="card">
+        <h3>Prioridade</h3>
+        {% if processo.prioridade == 'Urgente' %}
+            <span class="badge urgente">🔥 Urgente</span>
+        {% elif processo.prioridade == 'Normal' %}
+            <span class="badge">Normal</span>
+        {% else %}
+            <span class="badge success">Baixa</span>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h3>Cliente</h3>
+        <p>{{ processo.cliente.nome }}</p>
+    </div>
+
+    <div class="card">
+        <h3>Criado em</h3>
+        <p>{{ processo.data_criacao.strftime('%d/%m/%Y') }}</p>
+    </div>
+</div>
+
+<!-- OBSERVAÇÕES -->
+<h3>Observações do Processo</h3>
+
+{% for obs in processo.observacoes %}
+<div class="card">
+    <b>{{ obs.advogado.nome }}</b> - {{ obs.data.strftime("%d/%m/%Y %H:%M") }}
+    <p>{{ obs.texto }}</p>
+</div>
+{% endfor %}
+
+<form method="POST" action="{{ url_for('adicionar_observacao', id=processo.id) }}">
+    <textarea name="texto" required></textarea>
+    <button type="submit">Adicionar observação</button>
+</form>
+
+<hr>
+
+<!-- EDITAR PROCESSO + UPLOAD -->
+<h3>✏️ Atualizar Processo</h3>
+
+<form method="POST" enctype="multipart/form-data" class="form-card">
+
+    <div class="grid-2">
+        <div>
+            <label>Status</label>
+            <select name="status">
+                <option value="Em andamento" {% if processo.status == 'Em andamento' %}selected{% endif %}>Em andamento</option>
+                <option value="Concluído" {% if processo.status == 'Concluído' %}selected{% endif %}>Concluído</option>
+            </select>
+        </div>
+
+        <div>
+            <label>Prioridade</label>
+            <select name="prioridade">
+                <option value="Normal" {% if processo.prioridade == 'Normal' %}selected{% endif %}>Normal</option>
+                <option value="Urgente" {% if processo.prioridade == 'Urgente' %}selected{% endif %}>Urgente</option>
+                <option value="Baixa" {% if processo.prioridade == 'Baixa' %}selected{% endif %}>Baixa</option>
+            </select>
+        </div>
+    </div>
+
+   
+
+    <h3>📅 Audiência</h3>
+
+    <div class="grid-2">
+        <div>
+            <label>Data da audiência</label>
+            <input 
+                type="date" 
+                name="data_audiencia"
+                value="{{ processo.data_audiencia or '' }}"
+            >
+        </div>
+
+        <div>
+            <label>Hora</label>
+            <input 
+                type="time" 
+                name="hora_audiencia"
+                value="{{ processo.hora_audiencia or '' }}"
+            >
+        </div>
+    </div>
+
+    <label>Adicionar novos PDFs</label>
+    <input type="file" name="arquivos" multiple>
+
+    <button class="btn">💾 Salvar alterações</button>
+</form>
+
+<hr>
+
+<!-- PRAZOS -->
+<h3>⏰ Prazos</h3>
+
+<form method="POST" action="{{ url_for('adicionar_prazo', id=processo.id) }}" class="grid-2">
+    <input type="text" name="titulo" placeholder="Título do prazo" required>
+    <input type="date" name="data" required>
+    <button class="btn">➕ Adicionar</button>
+</form>
+
+<div class="card">
+<ul class="lista-prazos">
+{% for p in prazos %}
+    <li class="
+        {% if p.data_vencimento < hoje %}prazo-vencido
+        {% elif p.data_vencimento == hoje %}prazo-hoje
+        {% else %}prazo-futuro{% endif %}
+    ">
+        <div>
+            <strong>{{ p.titulo }}</strong><br>
+            📅 {{ p.data_vencimento.strftime('%d/%m/%Y') }}
+        </div>
+
+        <form method="POST" action="{{ url_for('excluir_prazo', id=p.id) }}">
+            <button class="btn btn-danger btn-sm">🗑</button>
+        </form>
+    </li>
+{% endfor %}
+</ul>
+
+</div>
+
+<hr>
+
+<!-- HISTÓRICO -->
+<h3>🕒 Histórico do Processo</h3>
+
+<div class="timeline">
+{% if historico %}
+    {% for h in historico %}
+        <div class="timeline-item">
+            <div class="timeline-dot"></div>
+
+            <div class="timeline-content">
+                <small>{{ h.data.strftime('%d/%m/%Y %H:%M') }}</small>
+                <p>{{ h.acao }}</p>
+            </div>
+        </div>
+    {% endfor %}
+{% else %}
+    <p>Nenhuma movimentação registrada</p>
+{% endif %}
+</div>
+
+
+<hr>
+
+<!-- ARQUIVOS -->
+<h3>📎 Arquivos do Processo</h3>
+
+<div class="card">
+{% if arquivos %}
+<ul class="lista-pdfs">
+    {% for a in arquivos %}
+        <li>
+            {{ a.nome_original }}
+
+            <div>
+                <a href="{{ url_for('baixar_pdf', id=arquivo.id) }}"
+                   class="btn btn-secondary btn-sm">Baixar</a>
+
+                <form method="POST"
+                      action="{{ url_for('excluir_arquivo', id=a.id) }}"
+                      style="display:inline;"
+                      onsubmit="return confirm('Excluir este arquivo?')">
+
+                    <button class="btn btn-danger btn-sm">🗑</button>
+                </form>
+            </div>
+        </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>Nenhum arquivo anexado</p>
+{% endif %}
+</div>
+
+<hr>
+
+<form method="POST"
+      action="{{ url_for('excluir_processo', id=processo.id) }}"
+      onsubmit="return confirm('Tem certeza que deseja excluir este processo? Todos os dados serão apagados!')">
+
+    <button class="btn btn-danger">
+        🗑 Excluir Processo
+    </button>
+</form>
+
+
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<div class="page-header">
+    <h2>👥 Clientes</h2>
+
+    <a href="{{ url_for('novo_cliente') }}" class="btn">
+        ➕ Novo Cliente
+    </a>
+</div>
+
+<div class="card table-card">
+    <table class="tabela">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>CPF</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for c in clientes %}
+                <tr>
+                    <td>{{ c.nome }}</td>
+                    <td>{{ c.cpf }}</td>
+                    <td class="acoes-tabela">
+                        <a href="{{ url_for('editar_cliente', id=c.id) }}" class="link">
+                            ✏️ Editar
+                        </a>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="3" class="empty">
+                        Nenhum cliente cadastrado.
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

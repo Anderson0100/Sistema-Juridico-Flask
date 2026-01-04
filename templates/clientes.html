@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<h2>👥 Clientes</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Nome</th>
+            <th>CPF</th>
+            <th>Data Nasc.</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for cliente in clientes %}
+        <tr>
+            <td>{{ cliente.nome }}</td>
+            <td>{{ cliente.cpf or '-' }}</td>
+            <td>{{ cliente.data_nascimento or '-' }}</td>
+            <td>
+                <a href="{{ url_for('editar_cliente', id=cliente.id) }}" class="btn btn-secondary">
+                    ✏️ Editar
+                </a>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="4">Nenhum cliente cadastrado</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<h2>🛡 Painel do Administrador</h2>
+
+<!-- KPIs -->
+<div class="cards">
+    <div class="card"><h3>Advogados</h3><p>{{ total_advogados }}</p></div>
+    <div class="card"><h3>Clientes</h3><p>{{ total_clientes }}</p></div>
+    <div class="card"><h3>Processos</h3><p>{{ total_processos }}</p></div>
+    <div class="card"><h3>Em andamento</h3><p>{{ em_andamento }}</p></div>
+    <div class="card"><h3>Concluídos</h3><p>{{ concluidos }}</p></div>
+</div>
+
+<hr>
+
+<form method="POST" action="/admin/advogado/novo">
+    <input name="nome" placeholder="Nome" required>
+    <input name="email" placeholder="Email" required>
+    <input name="senha" placeholder="Senha inicial" required>
+    <button class="btn">Criar Advogado</button>
+</form>
+
+
+<hr>
+
+<h3>👨‍⚖️ Advogados</h3>
+<table>
+<tr>
+    <th>Nome</th>
+    <th>Email</th>
+    <th>Processos</th>
+    <th>Status</th>
+    <th>Ações</th>
+</tr>
+
+{% for a in advogados %}
+<tr>
+    <td>{{ a.nome }}</td>
+    <td>{{ a.email }}</td>
+    <td>{{ mapa_processos[a.id] }}</td>
+    <td>{{ "Ativo" if a.ativo else "Bloqueado" }}</td>
+    <td>
+        <a href="/admin/advogado/{{ a.id }}/toggle" class="btn btn-secondary">
+            {% if a.ativo %}Bloquear{% else %}Ativar{% endif %}
+        </a>
+    </td>
+</tr>
+{% endfor %}
+</table>
+
+<hr>
+
+<h3>📂 Processos</h3>
+<table>
+<tr>
+    <th>Nº</th>
+    <th>Cliente</th>
+    <th>Advogado</th>
+    <th>Status</th>
+    <th>Ação</th>
+</tr>
+
+{% for p in processos %}
+<tr>
+    <td>{{ p.numero }}</td>
+    <td>{{ p.cliente.nome if p.cliente else "-" }}</td>
+    <td>{{ p.advogado.nome if p.advogado else "-" }}</td>
+    <td>{{ p.status }}</td>
+    <td>
+        <form method="POST" action="{{ url_for('admin_excluir_processo', id=p.id) }}">
+            <button class="btn btn-danger">Excluir</button>
+        </form>
+    </td>
+</tr>
+{% endfor %}
+</table>
+
+
+<hr>
+
+<h3>👥 Clientes</h3>
+<table>
+<tr>
+    <th>Nome</th>
+    <th>CPF</th>
+    <th>Ação</th>
+</tr>
+
+{% for c in clientes %}
+<tr>
+    <td>{{ c.nome }}</td>
+    <td>{{ c.cpf }}</td>
+    <td>
+        <a href="{{ url_for('admin_editar_cliente', id=c.id) }}" class="btn btn-secondary">
+            ✏️ Editar
+        </a>
+
+        <form method="POST" action="{{ url_for('admin_excluir_cliente', id=c.id) }}" style="display:inline;">
+            <button class="btn btn-danger">Excluir</button>
+        </form>
+    </td>
+</tr>
+{% endfor %}
+</table>
+
+<hr>
+
+<h3>🕒 Histórico do Sistema</h3>
+<div class="card">
+    <ul>
+        {% for h in historico %}
+        <li>
+            <strong>{{ h.data.strftime("%d/%m %H:%M") }}</strong> — {{ h.usuario_nome }} → {{ h.acao }}
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+
+{% endblock %}

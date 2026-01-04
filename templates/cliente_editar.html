@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<h2>✏️ Editar Cliente</h2>
+
+<div class="form-card">
+    <form method="POST">
+
+        <label>Nome do Cliente</label>
+        <input
+            type="text"
+            name="nome"
+            value="{{ cliente.nome }}"
+            required
+        >
+
+        <!-- CPF só aparece para ADMIN -->
+        {% if session.get("usuario_tipo") == "admin" %}
+            <label>CPF</label>
+            <input
+                type="text"
+                name="cpf"
+                value="{{ cliente.cpf }}"
+                required
+            >
+        {% endif %}
+
+        <label>Data de Nascimento</label>
+        <input
+            type="date"
+            name="data_nascimento"
+            value="{{ cliente.data_nascimento }}"
+            required
+        >
+
+        <div class="acoes" style="margin-top: 20px;">
+            <button type="submit" class="btn">
+                💾 Salvar Alterações
+            </button>
+
+            {% if session.get("usuario_tipo") == "admin" %}
+                <a href="{{ url_for('painel_admin') }}" class="btn btn-secondary">
+                    🔙 Voltar
+                </a>
+            {% else %}
+                <a href="{{ url_for('clientes_advogado') }}" class="btn btn-secondary">
+                    🔙 Voltar
+                </a>
+            {% endif %}
+        </div>
+
+    </form>
+</div>
+
+{% endblock %}

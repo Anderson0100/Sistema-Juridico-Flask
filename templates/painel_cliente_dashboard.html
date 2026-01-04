@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<div class="cliente-dashboard">
+
+    <h2>👋 Olá, {{ session.usuario_nome }}</h2>
+    <p class="sub">Acompanhe seus processos abaixo</p>
+
+    {% if notificacoes %}
+    <div class="card alertas">
+        <h3>🔔 Avisos do seu processo</h3>
+
+        {% for n in notificacoes %}
+            <div class="alerta">
+                {{ n.mensagem }}
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- KPIs -->
+    <div class="cliente-kpis">
+        <div class="kpi">
+            <span>Total</span>
+            <strong>{{ total }}</strong>
+        </div>
+        <div class="kpi">
+            <span>Em andamento</span>
+            <strong>{{ em_andamento }}</strong>
+        </div>
+        <div class="kpi">
+            <span>Concluídos</span>
+            <strong>{{ concluidos }}</strong>
+        </div>
+    </div>
+
+    {% if proxima %}
+    <div class="card destaque">
+        <h4>📅 Próxima Audiência</h4>
+        <p>
+            Processo <b>{{ proxima.numero }}</b><br>
+            {{ proxima.data_audiencia }} às {{ proxima.hora_audiencia }}
+        </p>
+    </div>
+    {% endif %}
+
+    <h3>📂 Meus Processos</h3>
+
+    <div class="processos-grid">
+        {% for p in processos %}
+        <div class="processo-card">
+            <h4>Processo {{ p.numero }}</h4>
+
+            <p>
+                <b>Status:</b>
+                <span class="status {{ p.status|lower }}">
+                    {{ p.status }}
+                </span>
+            </p>
+
+            {% if p.data_audiencia %}
+                <p>📅 {{ p.data_audiencia }} às {{ p.hora_audiencia }}</p>
+            {% else %}
+                <p>📅 Audiência não agendada</p>
+            {% endif %}
+
+            <a href="https://www.tjba.jus.br/portal/" target="_blank" class="btn btn-outline">
+                🔎 Consultar no Tribunal
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="suporte">
+        <h3>📞 Precisa de ajuda?</h3>
+        <a href="https://wa.me/5571999999999" class="btn btn-green">
+            💬 Falar no WhatsApp
+        </a>
+    </div>
+
+    <div class="faq">
+        <h3>❓ Dúvidas frequentes</h3>
+
+        <p><b>Meu processo está parado?</b><br>
+        O advogado atualiza sempre que houver movimentação.</p>
+
+        <p><b>Quando recebo?</b><br>
+        Depende do juiz. Assim que sair decisão você será informado.</p>
+
+        <p><b>Posso ver prazos?</b><br>
+        Não. Os prazos são internos do escritório.</p>
+    </div>
+
+</div>
+
+{% endblock %}

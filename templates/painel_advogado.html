@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<h2>⚖️ Painel do Advogado</h2>
+
+<!-- BUSCA GLOBAL -->
+<form method="GET" action="{{ url_for('painel_advogado') }}" class="busca-global" style="margin-bottom:24px;">
+    <input 
+        type="text" 
+        name="q" 
+        placeholder="🔍 Buscar processo, cliente, prazo ou PDF..." 
+        value="{{ request.args.get('q','') }}"
+    >
+    <button class="btn">Buscar</button>
+</form>
+
+
+{% if alertas %}
+<div class="alerta-central" style="margin-bottom:28px;">
+    <h3>🚨 Central de Alertas</h3>
+    <ul>
+        {% for a in alertas %}
+        <li class="alerta {{ a.tipo }}">
+            {{ a.texto }}
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<!-- GOOGLE AGENDA -->
+<div style="margin-bottom:40px;">
+    {% if google_conectado %}
+        <a href="https://calendar.google.com" target="_blank" class="btn">
+            📅 Abrir Google Agenda
+        </a>
+    {% else %}
+        <a href="{{ url_for('google_login') }}" class="btn btn-danger">
+            🔗 Conectar Google Agenda
+        </a>
+    {% endif %}
+</div>
+
+<!-- CARDS -->
+<div class="cards" style="margin-bottom:40px;">
+    <div class="card">
+        <h3>Total de Processos</h3>
+        <p>{{ total_processos }}</p>
+    </div>
+
+    <div class="card">
+        <h3>Em Andamento</h3>
+        <p>{{ em_andamento }}</p>
+    </div>
+
+    <div class="card">
+        <h3>Concluídos</h3>
+        <p>{{ concluidos }}</p>
+    </div>
+
+    <div class="card">
+        <h3>Urgentes</h3>
+        <p style="color:#dc2626">{{ urgentes }}</p>
+    </div>
+</div>
+
+{% if resultados %}
+<div class="card" style="margin-bottom:40px;">
+    <h3>🔍 Resultados</h3>
+
+    <h4>Processos</h4>
+    {% for p in resultados.processos %}
+        <p><a href="{{ url_for('detalhe_processo', id=p.id) }}">Processo {{ p.numero }}</a></p>
+    {% else %}
+        <p>Nenhum processo</p>
+    {% endfor %}
+
+    <h4>Clientes</h4>
+    {% for c in resultados.clientes %}
+        <p>{{ c.nome }}</p>
+    {% else %}
+        <p>Nenhum cliente</p>
+    {% endfor %}
+
+    <h4>Arquivos</h4>
+    {% for a in resultados.arquivos %}
+        <p>{{ a.nome_original }}</p>
+    {% else %}
+        <p>Nenhum arquivo</p>
+    {% endfor %}
+
+    <h4>Prazos</h4>
+    {% for p in resultados.prazos %}
+        <p>{{ p.titulo }} — {{ p.data_vencimento.strftime('%d/%m/%Y') }}</p>
+    {% else %}
+        <p>Nenhum prazo</p>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- CONTADOR DE PRAZOS -->
+<h3>⏰ Prazos</h3>
+
+<div class="cards" style="margin-bottom:40px;">
+    <div class="card">
+        <h4>Vencidos</h4>
+        <p>{{ prazos | selectattr('data_vencimento', 'lt', hoje) | list | length }}</p>
+    </div>
+
+    <div class="card">
+        <h4>Hoje</h4>
+        <p>{{ prazos | selectattr('data_vencimento', 'equalto', hoje) | list | length }}</p>
+    </div>
+
+    <div class="card">
+        <h4>Futuros</h4>
+        <p>{{ prazos | selectattr('data_vencimento', 'gt', hoje) | list | length }}</p>
+    </div>
+</div>
+
+<!-- AÇÕES -->
+<h3>🚀 Ações</h3>
+
+<div class="acoes" style="margin-bottom:40px;">
+    <a href="{{ url_for('novo_processo') }}" class="btn">➕ Novo Processo</a>
+    <a href="{{ url_for('processos_advogado') }}" class="btn">📂 Processos</a>
+    <a href="{{ url_for('clientes_advogado') }}" class="btn">👥 Clientes</a>
+    <a href="{{ url_for('novo_cliente') }}" class="btn">👤 Novo Cliente</a>
+</div>
+
+<h3>⚡ Ferramentas Jurídicas</h3>
+
+<div class="cards" style="margin-bottom:50px;">
+    <a href="https://www.jusbrasil.com.br" target="_blank" class="card link-card">
+        <h3>📚 JusBrasil</h3>
+        <p>Pesquisar Jurisprudência e processos</p>
+    </a>
+
+    <a href="https://previdenciarista.com/" target="_blank" class="card link-card">
+        <h3>🧓 Previdenciaristas</h3>
+        <p>Cálculos e teses previdenciárias</p>
+    </a>
+
+    <a href="https://app.juridico.ai/inicio" target="_blank" class="card link-card">
+        <h3>🤖 IA Jurídica</h3>
+        <p>Analisar peças, petições e argumentos</p>
+    </a>
+</div>
+
+<!-- AUDIÊNCIAS -->
+<h3>📅 Próximas Audiências</h3>
+
+<div class="card" style="margin-bottom:50px;">
+    {% if agenda %}
+        <ul class="lista-agenda">
+            {% for p in agenda %}
+                <li class="agenda-item">
+                    <div>
+                        <strong>Processo {{ p.numero }}</strong><br>
+                        {{ p.data_audiencia }} às {{ p.hora_audiencia }}
+                        {% if p.prioridade == 'Urgente' %}
+                            <span class="badge urgente">🔥 Urgente</span>
+                        {% endif %}
+                    </div>
+
+                    <a class="btn"
+                       href="{{ url_for('detalhe_processo', id=p.id) }}">
+                        Ver
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>📭 Nenhuma audiência agendada</p>
+    {% endif %}
+</div>
+
+<!-- PRAZOS -->
+<h3>📋 Lista de Prazos</h3>
+
+<div class="card timeline" style="margin-bottom:50px;">
+
+    {% if prazos %}
+        {% for prazo in prazos %}
+            <div class="timeline-item
+                {% if prazo.data_vencimento < hoje %}
+                    vencido
+                {% elif prazo.data_vencimento == hoje %}
+                    hoje
+                {% else %}
+                    futuro
+                {% endif %}
+            ">
+                <div class="timeline-date">
+                    {{ prazo.data_vencimento.strftime('%d/%m/%Y') }}
+                </div>
+
+                <div class="timeline-content">
+                    <strong>{{ prazo.titulo }}</strong><br>
+                    Processo {{ prazo.processo.numero }}
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>✅ Nenhum prazo cadastrado</p>
+    {% endif %}
+</div>
+
+<!-- KPIs -->
+<div class="cards kpis" style="margin-top:30px; margin-bottom:50px;">
+    <div class="card danger">
+        <h4>Prazos vencidos</h4>
+        <p>{{ prazos_vencidos }}</p>
+    </div>
+
+    <div class="card warning">
+        <h4>Audiências (7 dias)</h4>
+        <p>{{ audiencias_7_dias }}</p>
+    </div>
+
+    <div class="card success">
+        <h4>Taxa de conclusão</h4>
+        <p>{{ taxa }}%</p>
+    </div>
+</div>
+
+{% if notificacoes %}
+<div class="alerta-topo" style="margin-bottom:40px;">
+    <h3>🔔 Notificações do sistema</h3>
+    <ul>
+        {% for n in notificacoes %}
+            <li>{{ n }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+{% endblock %}

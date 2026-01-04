@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<h2>📅 Audiências</h2>
+
+<div class="card">
+    {% if audiencias %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Processo</th>
+                    <th>Data</th>
+                    <th>Hora</th>
+                    <th>Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in audiencias %}
+                <tr>
+                    <td>{{ a.processo.numero }}</td>
+                    <td>{{ a.data.strftime('%d/%m/%Y') }}</td>
+                    <td>{{ a.hora }}</td>
+                    <td>
+                        <a class="btn btn-secondary"
+                           href="{{ url_for('detalhe_processo', id=a.processo.id) }}">
+                            Ver processo
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Nenhuma audiência cadastrada</p>
+    {% endif %}
+</div>
+
+{% endblock %}

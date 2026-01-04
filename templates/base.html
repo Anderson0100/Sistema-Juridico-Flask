@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistema Jurídico</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="topo">
+    <h1>⚖️ Sistema Jurídico</h1>
+    <nav>
+        {% if session.usuario_tipo == "admin" %}
+            <a href="{{ url_for('painel_admin') }}">Painel</a>
+        {% elif session.usuario_tipo == "advogado" %}
+            <a href="{{ url_for('painel_advogado') }}">Painel</a>
+            <a href="{{ url_for('processos_advogado') }}">Processos</a>
+            <a href="{{ url_for('clientes_advogado') }}">Clientes</a>
+        {% elif session.usuario_tipo == "cliente" %}
+            <a href="{{ url_for('painel_cliente') }}">Meu Painel</a>
+        {% endif %}
+
+    <a href="{{ url_for('logout') }}">Sair</a>
+    </nav>
+</div>
+
+<div class="container">
+    {% block conteudo %}{% endblock %}
+</div>
+
+</body>
+</html>

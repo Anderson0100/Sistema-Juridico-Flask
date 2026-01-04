@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+
+# Segredos
+.env
+token.json
+Credentials.json
+
+# Uploads de usuários
+uploads/
+
+# VS Code
+.vscode/

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<h2>➕ Novo Processo</h2>
+
+<form method="POST" enctype="multipart/form-data" class="form-card">
+
+    <div class="form-grid">
+
+        <div>
+            <label>Número do Processo</label>
+            <input name="numero" required>
+        </div>
+
+        <div>
+            <label>Status</label>
+            <select name="status">
+                <option>Em andamento</option>
+                <option>Concluído</option>
+            </select>
+        </div>
+
+        <div>
+            <label>Prioridade</label>
+            <select name="prioridade">
+                <option>Normal</option>
+                <option>Urgente</option>
+                <option>Baixa</option>
+            </select>
+        </div>
+
+        <div>
+            <label>Cliente</label>
+            <select name="cliente_id">
+                {% for c in clientes %}
+                    <option value="{{ c.id }}">{{ c.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label>Data da audiência</label>
+            <input type="date" name="data_audiencia">
+        </div>
+
+        <div>
+            <label>Hora da audiência</label>
+            <input type="time" name="hora_audiencia">
+        </div>
+
+        <div class="full">
+            <label>Observações</label>
+            <textarea name="observacoes"></textarea>
+        </div>
+
+        <div class="full">
+            <label>Arquivos (PDF)</label>
+            <input type="file" name="arquivos" multiple>
+        </div>
+
+    </div>
+
+    <button class="btn" style="margin-top:20px">Salvar Processo</button>
+</form>
+
+{% endblock %}

@@ -1,0 +1,576 @@
+/* ======================================================
+   SISTEMA JURÍDICO — PREMIUM DARK UI
+   Organizado por módulos
+====================================================== */
+
+/* ===================== RESET ===================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+
+/* ===================== VARIÁVEIS ===================== */
+:root {
+    --bg: #020617;
+    --panel: #020617;
+    --card: rgba(15, 23, 42, 0.8);
+    --border: rgba(56, 189, 248, 0.15);
+    --text: #e5e7eb;
+    --muted: #94a3b8;
+    --primary: #38bdf8;
+    --primary-glow: rgba(56,189,248,.45);
+    --success: #22c55e;
+    --danger: #ef4444;
+    --warning: #facc15;
+}
+
+/* ===================== BODY ===================== */
+body {
+    background: radial-gradient(circle at top, #0f172a, #020617);
+    color: var(--text);
+    min-height: 100vh;
+}
+
+/* ===================== TOPO ===================== */
+.topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    background: rgba(2,6,23,.9);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+}
+
+.topo h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.topo nav a {
+    margin-left: 24px;
+    color: var(--muted);
+    text-decoration: none;
+    font-weight: 500;
+    transition: .2s;
+}
+
+.topo nav a:hover {
+    color: var(--primary);
+}
+
+/* ===================== CONTAINER ===================== */
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 40px 20px;
+}
+
+/* ===================== TITULOS ===================== */
+h2 {
+    font-size: 32px;
+    margin-bottom: 30px;
+}
+
+h3 {
+    margin: 30px 0 15px;
+    color: var(--muted);
+}
+
+/* ===================== CARDS ===================== */
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+    gap: 22px;
+}
+
+.card {
+    background: linear-gradient(180deg, rgba(15,23,42,.9), rgba(2,6,23,.9));
+    border-radius: 18px;
+    padding: 24px;
+    border: 1px solid var(--border);
+    box-shadow: 0 0 40px rgba(56,189,248,.12);
+    position: relative;
+    overflow: hidden;
+}
+
+.card::after {
+    content:"";
+    position:absolute;
+    inset:0;
+    background: radial-gradient(circle at top, var(--primary-glow), transparent 60%);
+    opacity:.25;
+    pointer-events:none;
+}
+
+.card h3 {
+    font-size: 14px;
+}
+
+.card p {
+    font-size: 42px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+/* ===================== BOTÕES ===================== */
+.btn {
+    padding: 12px 22px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #38bdf8, #0284c7);
+    color: #020617;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: .25s;
+    box-shadow: 0 0 18px rgba(56,189,248,.45);
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px rgba(56,189,248,.75);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg,#334155,#1e293b);
+    color: white;
+    box-shadow: 0 0 15px rgba(148,163,184,.3);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg,#ef4444,#991b1b);
+    color: white;
+}
+
+/* ===================== FORMULÁRIOS ===================== */
+input, select, textarea {
+    width: 100%;
+    padding: 14px;
+    background: rgba(2,6,23,.9);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    color: var(--text);
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 10px var(--primary-glow);
+}
+
+/* ===================== TABELA ===================== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+tbody tr:hover {
+    background: rgba(56,189,248,.05);
+}
+
+/* ===================== BADGES ===================== */
+.badge {
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge.urgente { background: var(--danger); }
+.badge.normal { background: var(--primary); }
+.badge.baixa { background: var(--success); }
+
+/* ===================== TIMELINE PRAZOS ===================== */
+.lista-prazos {
+    list-style: none;
+}
+
+.lista-prazos li {
+    padding: 14px;
+    border-left: 4px solid var(--primary);
+    background: rgba(15,23,42,.6);
+    margin-bottom: 12px;
+    border-radius: 12px;
+}
+
+.prazo-vencido { border-color: var(--danger); }
+.prazo-hoje { border-color: var(--warning); }
+.prazo-futuro { border-color: var(--success); }
+
+/* ===================== AGENDA ===================== */
+.agenda-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 16px;
+    background: rgba(15,23,42,.6);
+    border-radius: 12px;
+    border-left: 4px solid var(--primary);
+}
+
+/* ===================== LOGIN ===================== */
+.login-box {
+    max-width: 400px;
+    margin: 80px auto;
+    padding: 40px;
+    background: var(--card);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    box-shadow: 0 0 50px rgba(56,189,248,.2);
+    text-align: center;
+}
+
+.login-box h2 {
+    margin-bottom: 30px;
+}
+.timeline {
+    margin-top: 20px;
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: "";
+    position: absolute;
+    left: 8px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+}
+
+.timeline-item {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+    position: relative;
+}
+
+.timeline-dot {
+    width: 14px;
+    height: 14px;
+    background: var(--primary);
+    border-radius: 50%;
+    margin-left: -3px;
+    margin-top: 4px;
+    box-shadow: 0 0 10px var(--primary);
+}
+
+.timeline-content {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 18px;
+    width: 100%;
+}
+
+.timeline-content small {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.timeline-content p {
+    margin-top: 6px;
+    font-weight: 500;
+}
+.alerta-central {
+    background: #0f172a;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+}
+
+.alerta-central h3 {
+    color: #38bdf8;
+    margin-bottom: 10px;
+}
+
+.alerta-central ul {
+    list-style: none;
+    padding: 0;
+}
+
+.alerta-central li {
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.alerta.vencido {
+    background: #7f1d1d;
+    color: #fecaca;
+}
+
+.alerta.hoje {
+    background: #78350f;
+    color: #fde68a;
+}
+
+.alerta.amanha {
+    background: #92400e;
+    color: #fde68a;
+}
+
+.alerta.audiencia {
+    background: #1e3a8a;
+    color: #bfdbfe;
+}
+.card.danger { border-left: 5px solid #dc2626; }
+.card.warning { border-left: 5px solid #f59e0b; }
+.card.success { border-left: 5px solid #22c55e; }
+.link-card {
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--text);
+    transition: 0.3s;
+    border: 1px solid var(--border);
+    background: linear-gradient(135deg, var(--bg-secondary), #020617);
+}
+
+.link-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 0 25px rgba(56,189,248,0.4);
+    border-color: var(--primary);
+}
+
+.link-card h3 {
+    color: var(--primary);
+}
+.cliente-dashboard {
+    max-width: 900px;
+    margin: auto;
+}
+
+.sub {
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.cliente-kpis {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.kpi {
+    background: #f5f5f5;
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+}
+
+.kpi span {
+    display: block;
+    font-size: 12px;
+    color: #777;
+}
+
+.kpi strong {
+    font-size: 22px;
+}
+
+.processos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.processo-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
+
+.destaque {
+    background: #fff8e1;
+    border-left: 5px solid #fbc02d;
+}
+
+.suporte {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.faq {
+    margin-top: 30px;
+    background: #f7f7f7;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    h2 { font-size: 1.4rem; }
+    .btn { width: 100%; }
+}
+/* ======================================================
+   PAINEL DO CLIENTE — UI MOBILE FRIENDLY
+====================================================== */
+
+.cliente-dashboard {
+    max-width: 900px;
+    margin: auto;
+    padding: 10px;
+}
+
+/* Header do cliente */
+.cliente-dashboard h2 {
+    font-size: 22px;
+    margin-bottom: 5px;
+}
+
+.cliente-dashboard .sub {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 20px;
+}
+
+/* KPIs */
+.cliente-kpis {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+.cliente-kpis .kpi {
+    background: linear-gradient(180deg, rgba(15,23,42,.95), rgba(2,6,23,.95));
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 0 15px rgba(56,189,248,.15);
+}
+
+.cliente-kpis .kpi span {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.cliente-kpis .kpi strong {
+    display: block;
+    margin-top: 6px;
+    font-size: 26px;
+    color: var(--primary);
+}
+
+/* Cards dos processos */
+.processos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.processo-card {
+    background: linear-gradient(180deg, rgba(15,23,42,.95), rgba(2,6,23,.95));
+    border-radius: 16px;
+    padding: 18px;
+    border: 1px solid var(--border);
+    box-shadow: 0 0 20px rgba(56,189,248,.12);
+}
+
+.processo-card h4 {
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: var(--primary);
+}
+
+.processo-card p {
+    font-size: 14px;
+    color: var(--text);
+    margin-bottom: 6px;
+}
+
+/* Status */
+.status {
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status.em.andamento {
+    background: rgba(56,189,248,.15);
+    color: var(--primary);
+}
+
+.status.concluído {
+    background: rgba(34,197,94,.15);
+    color: var(--success);
+}
+
+/* Alertas do cliente */
+.alertas {
+    margin-bottom: 25px;
+    background: rgba(15,23,42,.9);
+    border-radius: 14px;
+    padding: 16px;
+    border: 1px solid var(--border);
+}
+
+.alerta {
+    background: rgba(56,189,248,.08);
+    padding: 12px 14px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    color: var(--text);
+    border-left: 4px solid var(--primary);
+}
+
+/* Botões no painel do cliente */
+.cliente-dashboard .btn {
+    width: 100%;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+/* FAQ */
+.faq {
+    margin-top: 30px;
+    background: rgba(15,23,42,.9);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+}
+
+.faq p {
+    font-size: 14px;
+    margin-bottom: 10px;
+    color: var(--muted);
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .cliente-kpis {
+        grid-template-columns: 1fr;
+    }
+
+    .processos-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cliente-dashboard h2 {
+        font-size: 20px;
+    }
+}
+
+.card b {
+    font-size: 13px;
+    color: #38bdf8;
+}
+
+

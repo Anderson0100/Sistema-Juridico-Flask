@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<h2>Login</h2>
+
+<form method="POST">
+
+    <label>Tipo de acesso</label>
+    <select name="tipo" id="tipo">
+        <option value="advogado">Advogado</option>
+        <option value="cliente">Cliente</option>
+        <option value="admin">Administrador</option>
+    </select>
+
+    <!-- ADVOGADO / ADMIN -->
+    <div id="advogadoBox">
+        <label>Email</label>
+        <input type="email" name="email">
+
+        <label>Senha</label>
+        <input type="password" name="senha">
+    </div>
+
+    <!-- CLIENTE -->
+    <div id="clienteBox">
+        <label>CPF</label>
+        <input type="text" name="cpf">
+
+        <label>Data de nascimento</label>
+        <input type="date" name="data_nascimento">
+    </div>
+
+    <button type="submit" class="btn">Entrar</button>
+</form>
+
+<script>
+const tipo = document.getElementById("tipo");
+const advogadoBox = document.getElementById("advogadoBox");
+const clienteBox = document.getElementById("clienteBox");
+
+function atualizar() {
+    if (tipo.value === "cliente") {
+        advogadoBox.style.display = "none";
+        clienteBox.style.display = "block";
+    } else {
+        advogadoBox.style.display = "block";
+        clienteBox.style.display = "none";
+    }
+}
+
+atualizar();
+tipo.addEventListener("change", atualizar);
+</script>
+
+{% endblock %}
