@@ -61,7 +61,7 @@ def login():
                     "usuario_tipo": user.tipo
                 })
 
-                return redirect(url_for("cliente.painel_cliente"))
+                return redirect(url_for("painel_cliente"))
 
             flash("Dados inválidos", "danger")
 

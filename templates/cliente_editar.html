@@ -29,7 +29,7 @@
         <button class="btn" type="submit">💾 Salvar Alterações</button>
 
         {% if session.get("usuario_tipo") == "admin" %}
-        <a href="{{ url_for('painel_admin') }}" class="btn btn-secondary">⬅ Voltar</a>
+        <a href="{{ url_for('admin.painel_admin') }}" class="btn btn-secondary">⬅ Voltar</a>
         {% else %}
         <a href="{{ url_for('clientes_advogado') }}" class="btn btn-secondary">⬅ Voltar</a>
         {% endif %}
