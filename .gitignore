@@ -1,15 +1,58 @@
-# Python
-__pycache__/
-*.pyc
-venv/
-
-# Segredos
+# Ambiente
 .env
-token.json
-Credentials.json
+venv/
+Lib/
+Scripts/
+Include/
+pyvenv.cfg
 
-# Uploads de usuários
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Banco de dados
+*.db
+*.sqlite3
+
+# Uploads (dados sensíveis)
 uploads/
 
-# VS Code
+# Logs
+*.log
+
+# Arquivos do WhatsApp / estado
+fila_atendimento.json
+modo_humano.json
+
+# Google / APIs
+Credentials.json
+token.json
+
+# WhatsApp API
+whatsapp-api/.env
+whatsapp-api/node_modules/
+whatsapp-api/sessions/
+whatsapp-api/auth/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# IDE
 .vscode/
+.idea/
+
+# Cache
+*.cache
+
+# Docker (opcional)
+docker-data/
+
+# Python extra
+*.pyo
+*.pyd
+
+# Backup
+*.bak
+*.tmp

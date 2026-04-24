@@ -1,0 +1,9 @@
+import threading
+
+SESSOES_WHATSAPP = {}
+ATENDIMENTOS_HUMANOS = {}
+EVENTOS_PROCESSADOS = {}
+FILA_ATENDIMENTO = []
+
+LOCK_MODO_HUMANO = threading.Lock()
+LOCK_FILA = threading.Lock()

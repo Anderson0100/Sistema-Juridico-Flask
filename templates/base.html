@@ -13,16 +13,18 @@
     <h1>⚖️ Sistema Jurídico</h1>
     <nav>
         {% if session.usuario_tipo == "admin" %}
-            <a href="{{ url_for('painel_admin') }}">Painel</a>
+            <a href="{{ url_for('admin.painel_admin') }}">Painel</a>
+
         {% elif session.usuario_tipo == "advogado" %}
-            <a href="{{ url_for('painel_advogado') }}">Painel</a>
+            <a href="{{ url_for('adv.painel_advogado') }}">Painel</a>
             <a href="{{ url_for('processos_advogado') }}">Processos</a>
-            <a href="{{ url_for('clientes_advogado') }}">Clientes</a>
+            <a href="{{ url_for('adv.clientes_advogado') }}">Clientes</a>
+
         {% elif session.usuario_tipo == "cliente" %}
             <a href="{{ url_for('painel_cliente') }}">Meu Painel</a>
         {% endif %}
 
-    <a href="{{ url_for('logout') }}">Sair</a>
+        <a href="{{ url_for('auth.logout') }}">Sair</a>
     </nav>
 </div>
 

@@ -1,55 +1,39 @@
 {% extends "base.html" %}
 {% block conteudo %}
 
-<h2>✏️ Editar Cliente</h2>
+<h2>🖍️ Editar Cliente</h2>
 
-<div class="form-card">
-    <form method="POST">
+<form method="POST">
+    <label>Nome do Cliente</label>
+    <input type="text" name="nome" value="{{ cliente.nome or '' }}" required>
 
-        <label>Nome do Cliente</label>
-        <input
-            type="text"
-            name="nome"
-            value="{{ cliente.nome }}"
-            required
-        >
+    {% if session.get("usuario_tipo") == "admin" %}
+    <label>CPF</label>
+    <input type="text" name="cpf" value="{{ cliente.cpf or '' }}" required>
+    {% else %}
+    <input type="hidden" name="cpf" value="{{ cliente.cpf or '' }}">
+    {% endif %}
 
-        <!-- CPF só aparece para ADMIN -->
+    <label>Data de Nascimento</label>
+    <input type="date" name="data_nascimento" value="{{ cliente.data_nascimento or '' }}" required>
+
+    <label>Telefone</label>
+    <input
+        type="text"
+        name="telefone"
+        value="{{ cliente.telefone or '' }}"
+        placeholder="DDD + número sem o 9. Ex: 87952804"
+    >
+
+    <div style="margin-top: 20px;">
+        <button class="btn" type="submit">💾 Salvar Alterações</button>
+
         {% if session.get("usuario_tipo") == "admin" %}
-            <label>CPF</label>
-            <input
-                type="text"
-                name="cpf"
-                value="{{ cliente.cpf }}"
-                required
-            >
+        <a href="{{ url_for('painel_admin') }}" class="btn btn-secondary">⬅ Voltar</a>
+        {% else %}
+        <a href="{{ url_for('clientes_advogado') }}" class="btn btn-secondary">⬅ Voltar</a>
         {% endif %}
-
-        <label>Data de Nascimento</label>
-        <input
-            type="date"
-            name="data_nascimento"
-            value="{{ cliente.data_nascimento }}"
-            required
-        >
-
-        <div class="acoes" style="margin-top: 20px;">
-            <button type="submit" class="btn">
-                💾 Salvar Alterações
-            </button>
-
-            {% if session.get("usuario_tipo") == "admin" %}
-                <a href="{{ url_for('painel_admin') }}" class="btn btn-secondary">
-                    🔙 Voltar
-                </a>
-            {% else %}
-                <a href="{{ url_for('clientes_advogado') }}" class="btn btn-secondary">
-                    🔙 Voltar
-                </a>
-            {% endif %}
-        </div>
-
-    </form>
-</div>
+    </div>
+</form>
 
 {% endblock %}

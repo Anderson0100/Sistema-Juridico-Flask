@@ -3,6 +3,37 @@
 
 <h2>⚖️ Processo {{ processo.numero }}</h2>
 
+<!-- MOVIMENTAÇÕES DO TRIBUNAL -->
+<div class="card">
+
+    <h3>📡 Movimentações do Tribunal</h3>
+
+    {% if processo.ultima_movimentacao %}
+        <div class="alerta-box">
+            <b>Última movimentação:</b><br>
+            {{ processo.ultima_movimentacao }}
+        </div>
+    {% else %}
+        <p>⚠️ Ainda não consultado no tribunal</p>
+    {% endif %}
+
+    <hr>
+
+    {% if processo.movimentacoes %}
+        <ul class="lista-movimentacoes">
+            {% for m in processo.movimentacoes %}
+                <li>
+                    <b>{{ m.data }}</b> — {{ m.descricao }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Sem movimentações registradas ainda.</p>
+    {% endif %}
+
+</div>
+
+
 <!-- ALERTAS -->
 {% if alertas %}
 <div class="alerta-topo">
@@ -12,7 +43,7 @@
 </div>
 {% endif %}
 
-<!-- CARDS DO PROCESSO -->
+<!-- CARDS -->
 <div class="cards">
     <div class="card">
         <h3>Status</h3>
@@ -43,24 +74,27 @@
     </div>
 </div>
 
+<hr>
+
 <!-- OBSERVAÇÕES -->
-<h3>Observações do Processo</h3>
+<h3>📝 Observações</h3>
 
 {% for obs in processo.observacoes %}
 <div class="card">
-    <b>{{ obs.advogado.nome }}</b> - {{ obs.data.strftime("%d/%m/%Y %H:%M") }}
+    <b>{{ obs.advogado.nome }}</b>
+    <small>{{ obs.data.strftime("%d/%m/%Y %H:%M") }}</small>
     <p>{{ obs.texto }}</p>
 </div>
 {% endfor %}
 
 <form method="POST" action="{{ url_for('adicionar_observacao', id=processo.id) }}">
     <textarea name="texto" required></textarea>
-    <button type="submit">Adicionar observação</button>
+    <button class="btn">Adicionar observação</button>
 </form>
 
 <hr>
 
-<!-- EDITAR PROCESSO + UPLOAD -->
+<!-- EDITAR PROCESSO -->
 <h3>✏️ Atualizar Processo</h3>
 
 <form method="POST" enctype="multipart/form-data" class="form-card">
@@ -84,32 +118,20 @@
         </div>
     </div>
 
-   
-
     <h3>📅 Audiência</h3>
-
     <div class="grid-2">
         <div>
-            <label>Data da audiência</label>
-            <input 
-                type="date" 
-                name="data_audiencia"
-                value="{{ processo.data_audiencia or '' }}"
-            >
+            <label>Data</label>
+            <input type="date" name="data_audiencia" value="{{ processo.data_audiencia or '' }}">
         </div>
-
         <div>
             <label>Hora</label>
-            <input 
-                type="time" 
-                name="hora_audiencia"
-                value="{{ processo.hora_audiencia or '' }}"
-            >
+            <input type="time" name="hora_audiencia" value="{{ processo.hora_audiencia or '' }}">
         </div>
     </div>
 
-    <label>Adicionar novos PDFs</label>
-    <input type="file" name="arquivos" multiple>
+    <label>📎 Adicionar PDFs</label>
+    <input type="file" name="arquivos" multiple accept=".pdf">
 
     <button class="btn">💾 Salvar alterações</button>
 </form>
@@ -125,93 +147,72 @@
     <button class="btn">➕ Adicionar</button>
 </form>
 
-<div class="card">
 <ul class="lista-prazos">
 {% for p in prazos %}
     <li class="
         {% if p.data_vencimento < hoje %}prazo-vencido
         {% elif p.data_vencimento == hoje %}prazo-hoje
-        {% else %}prazo-futuro{% endif %}
-    ">
-        <div>
-            <strong>{{ p.titulo }}</strong><br>
-            📅 {{ p.data_vencimento.strftime('%d/%m/%Y') }}
-        </div>
+        {% else %}prazo-futuro{% endif %}">
+        <strong>{{ p.titulo }}</strong> - {{ p.data_vencimento.strftime('%d/%m/%Y') }}
 
-        <form method="POST" action="{{ url_for('excluir_prazo', id=p.id) }}">
+        <form method="POST" action="{{ url_for('excluir_prazo', id=p.id) }}" style="display:inline;">
             <button class="btn btn-danger btn-sm">🗑</button>
         </form>
     </li>
 {% endfor %}
 </ul>
 
-</div>
-
 <hr>
 
 <!-- HISTÓRICO -->
-<h3>🕒 Histórico do Processo</h3>
+<h3>🕒 Histórico</h3>
 
-<div class="timeline">
 {% if historico %}
-    {% for h in historico %}
-        <div class="timeline-item">
-            <div class="timeline-dot"></div>
-
-            <div class="timeline-content">
-                <small>{{ h.data.strftime('%d/%m/%Y %H:%M') }}</small>
-                <p>{{ h.acao }}</p>
-            </div>
-        </div>
-    {% endfor %}
-{% else %}
-    <p>Nenhuma movimentação registrada</p>
-{% endif %}
+<div class="timeline">
+{% for h in historico %}
+    <div class="timeline-item">
+        <small>{{ h.data.strftime('%d/%m/%Y %H:%M') }}</small>
+        <p>{{ h.acao }}</p>
+    </div>
+{% endfor %}
 </div>
-
+{% else %}
+<p>Nenhuma movimentação registrada</p>
+{% endif %}
 
 <hr>
 
 <!-- ARQUIVOS -->
-<h3>📎 Arquivos do Processo</h3>
+<h3>📎 Arquivos</h3>
 
-<div class="card">
 {% if arquivos %}
 <ul class="lista-pdfs">
-    {% for a in arquivos %}
-        <li>
-            {{ a.nome_original }}
+{% for a in arquivos %}
+    <li>
+        {{ a.nome_original }}
 
-            <div>
-                <a href="{{ url_for('baixar_pdf', id=arquivo.id) }}"
-                   class="btn btn-secondary btn-sm">Baixar</a>
+        <div>
+            <a href="{{ url_for('baixar_pdf', id=a.id) }}" class="btn btn-secondary btn-sm">Baixar</a>
 
-                <form method="POST"
-                      action="{{ url_for('excluir_arquivo', id=a.id) }}"
-                      style="display:inline;"
-                      onsubmit="return confirm('Excluir este arquivo?')">
-
-                    <button class="btn btn-danger btn-sm">🗑</button>
-                </form>
-            </div>
-        </li>
-    {% endfor %}
+            <form method="POST" action="{{ url_for('excluir_arquivo', id=a.id) }}"
+                  style="display:inline;"
+                  onsubmit="return confirm('Excluir este arquivo?')">
+                <button class="btn btn-danger btn-sm">🗑</button>
+            </form>
+        </div>
+    </li>
+{% endfor %}
 </ul>
 {% else %}
 <p>Nenhum arquivo anexado</p>
 {% endif %}
-</div>
 
 <hr>
 
 <form method="POST"
       action="{{ url_for('excluir_processo', id=processo.id) }}"
-      onsubmit="return confirm('Tem certeza que deseja excluir este processo? Todos os dados serão apagados!')">
-
-    <button class="btn btn-danger">
-        🗑 Excluir Processo
-    </button>
+      onsubmit="return confirm('Tem certeza? Tudo será apagado!')">
+    <button class="btn btn-danger">🗑 Excluir Processo</button>
 </form>
-
 
 {% endblock %}

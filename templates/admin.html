@@ -3,118 +3,405 @@
 
 <h2>🛡 Painel do Administrador</h2>
 
-<!-- KPIs -->
 <div class="cards">
-    <div class="card"><h3>Advogados</h3><p>{{ total_advogados }}</p></div>
-    <div class="card"><h3>Clientes</h3><p>{{ total_clientes }}</p></div>
-    <div class="card"><h3>Processos</h3><p>{{ total_processos }}</p></div>
-    <div class="card"><h3>Em andamento</h3><p>{{ em_andamento }}</p></div>
-    <div class="card"><h3>Concluídos</h3><p>{{ concluidos }}</p></div>
+  <div class="card">
+    <h3>Advogados</h3>
+    <p>{{ total_advogados }}</p>
+  </div>
+  <div class="card">
+    <h3>Clientes</h3>
+    <p>{{ total_clientes }}</p>
+  </div>
+  <div class="card">
+    <h3>Processos</h3>
+    <p>{{ total_processos }}</p>
+  </div>
+  <div class="card">
+    <h3>Em andamento</h3>
+    <p>{{ em_andamento }}</p>
+  </div>
+  <div class="card">
+    <h3>Concluídos</h3>
+    <p>{{ concluidos }}</p>
+  </div>
 </div>
 
-<hr>
+<hr />
 
-<form method="POST" action="/admin/advogado/novo">
-    <input name="nome" placeholder="Nome" required>
-    <input name="email" placeholder="Email" required>
-    <input name="senha" placeholder="Senha inicial" required>
-    <button class="btn">Criar Advogado</button>
+<h3>📅 Agenda de Atendimentos do Dia</h3>
+
+<form method="GET" action="{{ url_for('admin.painel_admin') }}" style="margin-bottom: 20px;">
+  <input type="date" name="data" value="{{ data_filtro }}">
+  <button class="btn">Ver agenda</button>
 </form>
 
+<div class="cards" style="margin-bottom: 25px;">
+  <div class="card">
+    <h4>Total no dia</h4>
+    <p>{{ total_agenda_dia }}</p>
+  </div>
+</div>
 
-<hr>
+{% if agenda_do_dia %}
+<div class="card" style="margin-bottom: 30px;">
+  <table>
+    <tr>
+      <th>Hora</th>
+      <th>Cliente</th>
+      <th>Advogado</th>
+      <th>Assunto</th>
+      <th>Observação</th>
+      <th>Status</th>
+      <th>Ação</th>
+    </tr>
+
+    {% for item in agenda_do_dia %}
+    <tr>
+      <td>{{ item.hora_agendada }}</td>
+      <td>{{ item.nome_cliente }}</td>
+      <td>{{ item.advogado.nome if item.advogado else '-' }}</td>
+      <td>{{ item.assunto or '-' }}</td>
+      <td>{{ item.observacao or '-' }}</td>
+      <td>{{ item.status }}</td>
+      <td>
+        <form
+          method="POST"
+          action="{{ url_for('admin.admin_atualizar_status_agendamento', id=item.id) }}"
+          style="margin-bottom: 8px;"
+        >
+          <select name="status">
+            <option value="Marcado" {% if item.status == 'Marcado' %}selected{% endif %}>Marcado</option>
+            <option value="Confirmado" {% if item.status == 'Confirmado' %}selected{% endif %}>Confirmado</option>
+            <option value="Concluído" {% if item.status == 'Concluído' %}selected{% endif %}>Concluído</option>
+            <option value="Cancelado" {% if item.status == 'Cancelado' %}selected{% endif %}>Cancelado</option>
+          </select>
+          <button class="btn btn-secondary" type="submit">Atualizar</button>
+        </form>
+
+        <form
+          method="POST"
+          action="{{ url_for('admin.admin_excluir_agendamento', id=item.id) }}"
+          onsubmit="return confirm('Deseja realmente excluir este agendamento?');"
+        >
+          <button class="btn btn-danger" type="submit">Excluir</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% else %}
+<div class="card" style="margin-bottom: 30px;">
+  <p>Nenhum atendimento presencial agendado para esta data.</p>
+</div>
+{% endif %}
+
+<hr />
+
+<h3>🗓 Próximos atendimentos presenciais</h3>
+
+{% if proximos_agendamentos %}
+<div class="card" style="margin-bottom: 30px;">
+  <table>
+    <tr>
+      <th>Data</th>
+      <th>Hora</th>
+      <th>Cliente</th>
+      <th>Advogado</th>
+      <th>Assunto</th>
+      <th>Status</th>
+    </tr>
+
+    {% for item in proximos_agendamentos %}
+    <tr>
+      <td>{{ item.data_agendada }}</td>
+      <td>{{ item.hora_agendada }}</td>
+      <td>{{ item.nome_cliente }}</td>
+      <td>{{ item.advogado.nome if item.advogado else '-' }}</td>
+      <td>{{ item.assunto or '-' }}</td>
+      <td>{{ item.status }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% else %}
+<div class="card" style="margin-bottom: 30px;">
+  <p>Nenhum atendimento futuro cadastrado.</p>
+</div>
+{% endif %}
+
+<hr />
+
+<h3>👥 Novo agendamento presencial</h3>
+
+<form method="POST" action="{{ url_for('admin.admin_novo_agendamento') }}">
+  <input name="nome_cliente" placeholder="Nome do cliente" required />
+  <input name="telefone" placeholder="Telefone" />
+  <input name="assunto" placeholder="Assunto" />
+
+  <select name="advogado_id" required>
+    <option value="">Selecione o advogado</option>
+    {% for a in advogados %}
+    <option value="{{ a.id }}">{{ a.nome }}</option>
+    {% endfor %}
+  </select>
+
+  <input type="date" name="data_agendada" required />
+  <input type="time" name="hora_agendada" required />
+
+  <textarea
+    name="observacao"
+    placeholder="Observação do atendimento"
+    rows="3"
+  ></textarea>
+
+  <button class="btn">Salvar agendamento</button>
+</form>
+
+<hr />
+
+<h3>📞 Novo recado / aviso interno</h3>
+
+<form method="POST" action="{{ url_for('admin.admin_novo_recado') }}">
+  <input name="nome_cliente" placeholder="Nome do cliente" required />
+  <input name="telefone" placeholder="Telefone" />
+  <input name="assunto" placeholder="Assunto" required />
+
+  <select name="advogado_id">
+    <option value="">Selecione o advogado</option>
+    {% for a in advogados %}
+    <option value="{{ a.id }}">{{ a.nome }}</option>
+    {% endfor %}
+  </select>
+
+  <select name="canal">
+    <option value="ligacao">Ligação</option>
+    <option value="whatsapp">WhatsApp</option>
+    <option value="interno">Aviso interno</option>
+    <option value="presencial">Recado presencial</option>
+  </select>
+
+  <textarea
+    name="recado"
+    placeholder="Digite o recado / aviso"
+    rows="4"
+    required
+  ></textarea>
+
+  <button class="btn">Salvar recado</button>
+</form>
+
+<hr />
+
+<h3>🧾 Recados recentes</h3>
+
+{% if recados_recentes %}
+<table>
+  <tr>
+    <th>Cliente</th>
+    <th>Telefone</th>
+    <th>Advogado</th>
+    <th>Canal</th>
+    <th>Assunto</th>
+    <th>Recado</th>
+    <th>Status</th>
+    <th>Ação</th>
+  </tr>
+
+  {% for item in recados_recentes %}
+  <tr>
+    <td>{{ item.nome_cliente }}</td>
+    <td>{{ item.telefone or '-' }}</td>
+    <td>{{ item.advogado.nome if item.advogado else '-' }}</td>
+    <td>{{ item.canal|capitalize }}</td>
+    <td>{{ item.assunto }}</td>
+    <td>{{ item.recado }}</td>
+    <td>{{ item.status }}</td>
+    <td>
+      <form
+        method="POST"
+        action="{{ url_for('admin.admin_atualizar_status_recado', id=item.id) }}"
+        style="margin-bottom: 8px;"
+      >
+        <select name="status">
+          <option value="Pendente" {% if item.status == 'Pendente' %}selected{% endif %}>Pendente</option>
+          <option value="Lido" {% if item.status == 'Lido' %}selected{% endif %}>Lido</option>
+          <option value="Resolvido" {% if item.status == 'Resolvido' %}selected{% endif %}>Resolvido</option>
+        </select>
+        <button class="btn btn-secondary" type="submit">Atualizar</button>
+      </form>
+
+      <form
+        method="POST"
+        action="{{ url_for('admin.admin_excluir_recado', id=item.id) }}"
+        onsubmit="return confirm('Deseja realmente excluir este recado?');"
+      >
+        <button class="btn btn-danger" type="submit">Excluir</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<div class="card">
+  <p>Nenhum recado cadastrado.</p>
+</div>
+{% endif %}
+
+<hr />
+
+<h3>👨‍⚖️ Criar Advogado</h3>
+
+<form method="POST" action="{{ url_for('admin.admin_novo_advogado') }}">
+  <input name="nome" placeholder="Nome" required />
+  <input name="email" placeholder="Email" required />
+  <input name="senha" placeholder="Senha inicial" required />
+  <button class="btn">Criar Advogado</button>
+</form>
+
+<hr />
 
 <h3>👨‍⚖️ Advogados</h3>
+
 <table>
-<tr>
+  <tr>
     <th>Nome</th>
     <th>Email</th>
     <th>Processos</th>
     <th>Status</th>
     <th>Ações</th>
-</tr>
+  </tr>
 
-{% for a in advogados %}
-<tr>
+  {% for a in advogados %}
+  <tr>
     <td>{{ a.nome }}</td>
     <td>{{ a.email }}</td>
     <td>{{ mapa_processos[a.id] }}</td>
     <td>{{ "Ativo" if a.ativo else "Bloqueado" }}</td>
     <td>
-        <a href="/admin/advogado/{{ a.id }}/toggle" class="btn btn-secondary">
-            {% if a.ativo %}Bloquear{% else %}Ativar{% endif %}
-        </a>
+      <a href="{{ url_for('admin.admin_toggle_advogado', id=a.id) }}" class="btn btn-secondary">
+        {% if a.ativo %}Bloquear{% else %}Ativar{% endif %}
+      </a>
     </td>
-</tr>
-{% endfor %}
+  </tr>
+  {% endfor %}
 </table>
 
-<hr>
+<hr />
 
 <h3>📂 Processos</h3>
+
 <table>
-<tr>
+  <tr>
     <th>Nº</th>
     <th>Cliente</th>
     <th>Advogado</th>
     <th>Status</th>
     <th>Ação</th>
-</tr>
+  </tr>
 
-{% for p in processos %}
-<tr>
+  {% for p in processos %}
+  <tr>
     <td>{{ p.numero }}</td>
     <td>{{ p.cliente.nome if p.cliente else "-" }}</td>
     <td>{{ p.advogado.nome if p.advogado else "-" }}</td>
     <td>{{ p.status }}</td>
     <td>
-        <form method="POST" action="{{ url_for('admin_excluir_processo', id=p.id) }}">
-            <button class="btn btn-danger">Excluir</button>
-        </form>
+      <form method="POST" action="{{ url_for('admin.admin_excluir_processo', id=p.id) }}">
+        <button class="btn btn-danger">Excluir</button>
+      </form>
     </td>
-</tr>
-{% endfor %}
+  </tr>
+  {% endfor %}
 </table>
 
-
-<hr>
+<hr />
 
 <h3>👥 Clientes</h3>
+
 <table>
-<tr>
+  <tr>
     <th>Nome</th>
     <th>CPF</th>
     <th>Ação</th>
-</tr>
+  </tr>
 
-{% for c in clientes %}
-<tr>
+  {% for c in clientes %}
+  <tr>
     <td>{{ c.nome }}</td>
     <td>{{ c.cpf }}</td>
     <td>
-        <a href="{{ url_for('admin_editar_cliente', id=c.id) }}" class="btn btn-secondary">
-            ✏️ Editar
-        </a>
+      <a href="{{ url_for('admin.admin_editar_cliente', id=c.id) }}" class="btn btn-secondary">
+        ✏️ Editar
+      </a>
 
-        <form method="POST" action="{{ url_for('admin_excluir_cliente', id=c.id) }}" style="display:inline;">
-            <button class="btn btn-danger">Excluir</button>
-        </form>
+      <form
+        method="POST"
+        action="{{ url_for('admin.admin_excluir_cliente', id=c.id) }}"
+        style="display: inline"
+      >
+        <button class="btn btn-danger">Excluir</button>
+      </form>
     </td>
-</tr>
-{% endfor %}
+  </tr>
+  {% endfor %}
 </table>
 
-<hr>
+<hr />
+
+<h3>📲 Fila de Atendimento WhatsApp</h3>
+
+{% if fila_atendimento and fila_atendimento|length > 0 %}
+<table>
+  <tr>
+    <th>Posição</th>
+    <th>Nome</th>
+    <th>Número</th>
+    <th>Assunto</th>
+    <th>Ação</th>
+  </tr>
+
+  {% for item in fila_atendimento %}
+  <tr>
+    <td>{{ item.posicao }}</td>
+    <td>{{ item.nome or "-" }}</td>
+    <td>{{ item.numero }}</td>
+    <td>{{ item.assunto or "-" }}</td>
+    <td>
+      {% if item.posicao == 1 %}
+      <form
+        method="POST"
+        action="{{ url_for('admin.admin_passar_proximo_fila') }}"
+        style="display: inline"
+      >
+        <input type="hidden" name="numero" value="{{ item.numero }}" />
+        <button class="btn btn-success">✅ Passar próximo</button>
+      </form>
+      {% else %}
+      <span style="opacity: 0.7">Aguardando</span>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<div class="card">
+  <p>Nenhum atendimento aguardando na fila.</p>
+</div>
+{% endif %}
+
+<hr />
 
 <h3>🕒 Histórico do Sistema</h3>
+
 <div class="card">
-    <ul>
-        {% for h in historico %}
-        <li>
-            <strong>{{ h.data.strftime("%d/%m %H:%M") }}</strong> — {{ h.usuario_nome }} → {{ h.acao }}
-        </li>
-        {% endfor %}
-    </ul>
+  <ul>
+    {% for h in historico %}
+    <li>
+      <strong>{{ h.data.strftime("%d/%m %H:%M") }}</strong> — {{ h.usuario_nome }} → {{ h.acao }}
+    </li>
+    {% endfor %}
+  </ul>
 </div>
 
 {% endblock %}
