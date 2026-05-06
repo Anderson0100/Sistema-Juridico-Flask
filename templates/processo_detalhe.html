@@ -76,14 +76,23 @@
 
 <hr>
 
-<!-- OBSERVAÇÕES -->
 <h3>📝 Observações</h3>
 
 {% for obs in processo.observacoes %}
-<div class="card">
-    <b>{{ obs.advogado.nome }}</b>
-    <small>{{ obs.data.strftime("%d/%m/%Y %H:%M") }}</small>
-    <p>{{ obs.texto }}</p>
+<div class="card observacao-card">
+    <div class="observacao-topo">
+        <strong>{{ obs.advogado.nome if obs.advogado else "Sistema" }}</strong>
+        <span>{{ obs.data.strftime("%d/%m/%Y %H:%M") }}</span>
+    </div>
+
+    <p class="observacao-texto">{{ obs.texto }}</p>
+
+    {% if session.usuario_tipo == "admin" or session.usuario_id == obs.advogado_id %}
+    <form method="POST" action="{{ url_for('excluir_observacao', id=obs.id) }}"
+          onsubmit="return confirm('Deseja excluir esta observação?');">
+        <button class="btn btn-danger">Excluir observação</button>
+    </form>
+    {% endif %}
 </div>
 {% endfor %}
 

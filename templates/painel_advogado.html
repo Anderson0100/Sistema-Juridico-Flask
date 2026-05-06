@@ -19,6 +19,99 @@
   <button class="btn">Buscar</button>
 </form>
 
+{% if q %}
+<hr>
+
+<h3>🔍 Resultados da busca por "{{ q }}"</h3>
+
+<div class="card">
+
+    <h4>📂 Processos</h4>
+    {% if resultados.processos %}
+        <ul>
+            {% for p in resultados.processos %}
+                <li>
+                    <a href="{{ url_for('detalhe_processo', id=p.id) }}" class="btn btn-secondary">
+                        Abrir processo
+                    </a>
+                    <strong>{{ p.numero }}</strong>
+                    — Cliente: {{ p.cliente.nome if p.cliente else "-" }}
+                    — Status: {{ p.status }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Nenhum processo encontrado.</p>
+    {% endif %}
+
+    <h4>👥 Clientes</h4>
+    {% if resultados.clientes %}
+        <ul>
+            {% for c in resultados.clientes %}
+                <li>
+                    <a href="{{ url_for('adv.editar_cliente', id=c.id) }}" class="btn btn-secondary">
+                        Abrir cliente
+                    </a>
+                    <strong>{{ c.nome }}</strong>
+                    — CPF: {{ c.cpf }}
+                    — Telefone: {{ c.telefone or "-" }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Nenhum cliente encontrado.</p>
+    {% endif %}
+
+    <h4>⏰ Prazos</h4>
+    {% if resultados.prazos %}
+        <ul>
+            {% for prazo in resultados.prazos %}
+                <li>
+                    <a href="{{ url_for('detalhe_processo', id=prazo.processo.id) }}" class="btn btn-secondary">
+                        Abrir processo
+                    </a>
+                    <strong>{{ prazo.titulo }}</strong>
+                    — Processo: {{ prazo.processo.numero }}
+                    — Cliente: {{ prazo.processo.cliente.nome if prazo.processo.cliente else "-" }}
+                    — Vence em: {{ prazo.data_vencimento.strftime("%d/%m/%Y") }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Nenhum prazo encontrado.</p>
+    {% endif %}
+
+    <h4>📎 Arquivos / PDFs</h4>
+    {% if resultados.arquivos %}
+        <ul>
+            {% for arq in resultados.arquivos %}
+                <li>
+                    <a href="{{ url_for('baixar_pdf', id=arq.id) }}" class="btn btn-secondary">
+                        Baixar PDF
+                    </a>
+
+                    {% if arq.processo %}
+                        <a href="{{ url_for('detalhe_processo', id=arq.processo.id) }}" class="btn">
+                            Abrir processo
+                        </a>
+                    {% endif %}
+
+                    <strong>{{ arq.nome_original }}</strong>
+                    {% if arq.processo %}
+                        — Processo: {{ arq.processo.numero }}
+                        — Cliente: {{ arq.processo.cliente.nome if arq.processo.cliente else "-" }}
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Nenhum arquivo encontrado.</p>
+    {% endif %}
+
+</div>
+{% endif %}
+                
+
 {% if alertas %}
 <div class="alerta-central" style="margin-bottom: 28px">
   <h3>🚨 Central de Alertas</h3>

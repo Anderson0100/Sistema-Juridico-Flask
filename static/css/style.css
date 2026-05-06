@@ -573,4 +573,29 @@ tbody tr:hover {
     color: #38bdf8;
 }
 
+.observacao-card {
+    margin-bottom: 15px;
+    padding: 18px;
+}
 
+.observacao-topo {
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.observacao-topo strong {
+    color: #00eaff;
+}
+
+.observacao-topo span {
+    color: #ccc;
+    margin-left: 8px;
+}
+
+.observacao-texto {
+    font-size: 16px;
+    line-height: 1.5;
+    color: #fff;
+    margin: 10px 0 15px;
+    font-weight: normal;
+}

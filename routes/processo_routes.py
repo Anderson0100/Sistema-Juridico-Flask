@@ -14,6 +14,8 @@ from services.whatsapp_service import enviar_mensagem
 from google_calendar import get_calendar_service, criar_evento_google
 from utils.files import allowed_file
 from utils.logs import log_sistema
+from models import Observacao, ProcessoHistorico
+from flask import abort
 
 
 @app.route("/monitorar/<int:id>")
@@ -115,6 +117,26 @@ def adicionar_observacao(id):
     flash("Observação adicionada com sucesso", "success")
     return redirect(url_for('detalhe_processo', id=id))
 
+@app.route("/observacao/<int:id>/excluir", methods=["POST"])
+@login_required()
+def excluir_observacao(id):
+    obs = Observacao.query.get_or_404(id)
+    processo_id = obs.processo_id
+
+    if session.get("usuario_tipo") != "admin" and obs.advogado_id != session.get("usuario_id"):
+        abort(403)
+
+    db.session.add(ProcessoHistorico(
+        processo_id=processo_id,
+        usuario_id=session.get("usuario_id"),
+        acao="Observação excluída"
+    ))
+
+    db.session.delete(obs)
+    db.session.commit()
+
+    flash("Observação excluída com sucesso.", "success")
+    return redirect(url_for("detalhe_processo", id=processo_id))
 
 @app.route('/advogado/processos')
 @login_required('advogado')
