@@ -6,7 +6,7 @@ from flask import render_template, request, redirect, url_for, session, flash, s
 from werkzeug.utils import secure_filename
 
 from app import app
-from core.auth import login_required, pode_editar_processo
+from core.auth import login_required, pode_editar_processo, pode_ver_processo
 from models import *
 from services.db import db
 from services.monitor import verificar_nova_movimentacao
@@ -14,14 +14,15 @@ from services.whatsapp_service import enviar_mensagem
 from google_calendar import get_calendar_service, criar_evento_google
 from utils.files import allowed_file
 from utils.logs import log_sistema
-from models import Observacao, ProcessoHistorico
-from flask import abort
 
 
 @app.route("/monitorar/<int:id>")
 @login_required()
 def monitorar_processo(id):
     processo = Processo.query.get_or_404(id)
+
+    if not pode_editar_processo(processo):
+        abort(403)
 
     houve_atualizacao = verificar_nova_movimentacao(processo)
 
@@ -35,8 +36,9 @@ def monitorar_processo(id):
 
 
 @app.route("/debug-monitor/<int:id>")
+@login_required("admin")
 def debug_monitor(id):
-    processo = Processo.query.get(id)
+    processo = Processo.query.get_or_404(id)
     from services.consulta import consultar_processo
     dados = consultar_processo(processo.numero)
     return str(dados)
@@ -78,6 +80,11 @@ def adicionar_prazo(id):
 @login_required()
 def excluir_prazo(id):
     prazo = Prazo.query.get_or_404(id)
+    processo = Processo.query.get_or_404(prazo.processo_id)
+
+    if not pode_editar_processo(processo):
+        abort(403)
+
     processo_id = prazo.processo_id
 
     db.session.add(ProcessoHistorico(
@@ -92,9 +99,12 @@ def excluir_prazo(id):
 
 
 @app.route('/processos/<int:id>/observacao', methods=['POST'])
-@login_required('advogado')
+@login_required()
 def adicionar_observacao(id):
     processo = Processo.query.get_or_404(id)
+
+    if not pode_editar_processo(processo):
+        abort(403)
 
     texto = request.form['texto']
 
@@ -310,6 +320,10 @@ def novo_processo():
 @login_required()
 def detalhe_processo(id):
     processo = Processo.query.get_or_404(id)
+
+    if not pode_ver_processo(processo):
+        abort(403)
+
     pode_editar = pode_editar_processo(processo)
 
     if request.method == "POST":
@@ -433,7 +447,8 @@ def detalhe_processo(id):
         prazos=prazos,
         hoje=hoje,
         alertas=alertas,
-        movimentacoes=movimentacoes
+        movimentacoes=movimentacoes,
+        pode_editar=pode_editar
     )
 
 
@@ -480,13 +495,10 @@ def excluir_processo(id):
 @login_required()
 def baixar_pdf(id):
     arquivo = ProcessoArquivo.query.get_or_404(id)
-    processo = Processo.query.get(arquivo.processo_id)
+    processo = Processo.query.get_or_404(arquivo.processo_id)
 
-    if session["usuario_tipo"] == "admin":
-        pass
-    elif session["usuario_tipo"] == "advogado":
-        if processo.advogado_id != session["usuario_id"]:
-            abort(403)
+    if not pode_ver_processo(processo):
+        abort(403)
 
     return send_from_directory(
         app.config["UPLOAD_FOLDER"],
@@ -499,6 +511,10 @@ def baixar_pdf(id):
 @login_required()
 def excluir_arquivo(id):
     arquivo = ProcessoArquivo.query.get_or_404(id)
+    processo = Processo.query.get_or_404(arquivo.processo_id)
+
+    if not pode_editar_processo(processo):
+        abort(403)
 
     caminho = os.path.join(app.config["UPLOAD_FOLDER"], arquivo.nome_arquivo)
     if os.path.exists(caminho):
@@ -514,4 +530,4 @@ def excluir_arquivo(id):
     db.session.delete(arquivo)
     db.session.commit()
 
-    return redirect(url_for("detalhe_processo", id=arquivo.processo_id))
+    return redirect(url_for("detalhe_processo", id=processo.id))

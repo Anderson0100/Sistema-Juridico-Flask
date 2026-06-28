@@ -4,6 +4,7 @@
 <h2>👤 Novo Cliente</h2>
 
 <form method="POST" class="form-card">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
     <label>Nome</label>
     <input type="text" name="nome" required>
@@ -19,7 +20,7 @@
 
     <div class="acoes">
         <button type="submit" class="btn">💾 Salvar</button>
-        <a href="{{ url_for('clientes_advogado') }}" class="btn btn-secondary">↩ Voltar</a>
+        <a href="{{ url_for('adv.clientes_advogado') }}" class="btn btn-secondary">↩ Voltar</a>
     </div>
 
 </form>

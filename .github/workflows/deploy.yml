@@ -1,0 +1,91 @@
+name: Deploy main
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to server
+    runs-on: ubuntu-latest
+
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+      DEPLOY_SERVICE: ${{ secrets.DEPLOY_SERVICE }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+
+    steps:
+      - name: Validate deploy secrets
+        run: |
+          set -euo pipefail
+
+          for secret_name in DEPLOY_HOST DEPLOY_USER DEPLOY_PATH DEPLOY_SERVICE DEPLOY_SSH_KEY; do
+            if [ -z "${!secret_name}" ]; then
+              echo "::error::$secret_name is not configured in repository secrets."
+              exit 1
+            fi
+          done
+
+      - name: Configure SSH
+        run: |
+          set -euo pipefail
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+          ssh-keyscan -p "$DEPLOY_PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy application
+        run: |
+          set -euo pipefail
+
+          ssh \
+            -i ~/.ssh/deploy_key \
+            -p "$DEPLOY_PORT" \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "DEPLOY_PATH='$DEPLOY_PATH' DEPLOY_SERVICE='$DEPLOY_SERVICE' bash -s" <<'REMOTE'
+          set -euo pipefail
+
+          cd "$DEPLOY_PATH"
+
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+
+          if [ -d "venv" ]; then
+            . venv/bin/activate
+          elif [ -d ".venv" ]; then
+            . .venv/bin/activate
+          else
+            python3 -m venv venv
+            . venv/bin/activate
+          fi
+
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+          python -m compileall app.py models.py routes whatsapp services core jobs utils google_calendar.py
+
+          ENABLE_SCHEDULER=false python - <<'PY'
+          from app import app
+          from services.db import db
+
+          with app.app_context():
+              db.create_all()
+          PY
+
+          sudo systemctl restart "$DEPLOY_SERVICE"
+          sudo systemctl --no-pager --full status "$DEPLOY_SERVICE"
+          REMOTE

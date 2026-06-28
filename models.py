@@ -34,21 +34,24 @@ class Usuario(db.Model):
         "Processo",
         foreign_keys="Processo.advogado_id",
         backref="advogado_rel",
-        lazy=True
+        lazy=True,
+        overlaps="advogado"
     )
 
     processos_como_cliente = db.relationship(
         "Processo",
         foreign_keys="Processo.cliente_id",
         backref="cliente_rel",
-        lazy=True
+        lazy=True,
+        overlaps="cliente"
     )
 
     processos_criados = db.relationship(
         "Processo",
         foreign_keys="Processo.criado_por",
         backref="criador_rel",
-        lazy=True
+        lazy=True,
+        overlaps="criador"
     )
 
 # ==========================
@@ -168,12 +171,29 @@ class Processo(db.Model):
     criado_por = db.Column(db.Integer, db.ForeignKey('usuario.id'))
     cliente_id = db.Column(db.Integer, db.ForeignKey('usuario.id'))
 
-    advogado = db.relationship("Usuario", foreign_keys=[advogado_id])
-    criador = db.relationship("Usuario", foreign_keys=[criado_por])
-    cliente = db.relationship('Usuario', foreign_keys=[cliente_id])
+    advogado = db.relationship(
+        "Usuario",
+        foreign_keys=[advogado_id],
+        overlaps="advogado_rel,processos_como_advogado"
+    )
+    criador = db.relationship(
+        "Usuario",
+        foreign_keys=[criado_por],
+        overlaps="criador_rel,processos_criados"
+    )
+    cliente = db.relationship(
+        'Usuario',
+        foreign_keys=[cliente_id],
+        overlaps="cliente_rel,processos_como_cliente"
+    )
 
     prazos = db.relationship('Prazo', backref='processo', lazy=True)
-    observacoes = db.relationship("Observacao", backref="processo_rel", lazy=True)
+    observacoes = db.relationship(
+        "Observacao",
+        backref="processo_rel",
+        lazy=True,
+        overlaps="processo"
+    )
 
     ultima_movimentacao = db.Column(db.String(300))
     data_movimentacao = db.Column(db.DateTime)
@@ -269,4 +289,32 @@ class Observacao(db.Model):
     advogado_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
 
     advogado = db.relationship("Usuario")
-    processo = db.relationship("Processo")
+    processo = db.relationship("Processo", overlaps="observacoes,processo_rel")
+
+
+# ==========================
+# FilaAtendimento
+# ==========================
+class FilaAtendimento(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    numero = db.Column(db.String(20), nullable=False)
+    nome = db.Column(db.String(150))
+    assunto = db.Column(db.String(300))
+
+    status = db.Column(db.String(30), default="aguardando")
+
+    criado_em = db.Column(db.DateTime, default=agora_br)
+
+
+# ==========================
+# Numeros ignorados pela IA
+# ==========================
+class NumeroIgnoradoIA(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    nome = db.Column(db.String(150), nullable=False)
+    numero = db.Column(db.String(20), nullable=False, unique=True, index=True)
+    ativo = db.Column(db.Boolean, default=True)
+
+    criado_em = db.Column(db.DateTime, default=agora_br)

@@ -17,12 +17,12 @@
             <tbody>
                 {% for a in audiencias %}
                 <tr>
-                    <td>{{ a.processo.numero }}</td>
-                    <td>{{ a.data.strftime('%d/%m/%Y') }}</td>
-                    <td>{{ a.hora }}</td>
+                    <td>{{ a.numero }}</td>
+                    <td>{{ a.data_audiencia }}</td>
+                    <td>{{ a.hora_audiencia or '-' }}</td>
                     <td>
                         <a class="btn btn-secondary"
-                           href="{{ url_for('detalhe_processo', id=a.processo.id) }}">
+                           href="{{ url_for('detalhe_processo', id=a.id) }}">
                             Ver processo
                         </a>
                     </td>

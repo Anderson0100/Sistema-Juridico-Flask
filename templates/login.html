@@ -4,6 +4,7 @@
 <h2>Login</h2>
 
 <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
     <label>Tipo de acesso</label>
     <select name="tipo" id="tipo">

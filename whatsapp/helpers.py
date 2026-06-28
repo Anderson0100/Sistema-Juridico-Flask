@@ -1,17 +1,16 @@
 from time import time
-
+from models import FilaAtendimento, NumeroIgnoradoIA
+from services.db import db
 from services.whatsapp_service import enviar_mensagem
-from utils.phone import limpar_numero
+from utils.phone import limpar_numero, normalizar_telefone_brasil
 from utils.files import carregar_json_seguro, salvar_json_seguro
 from whatsapp.state import (
     SESSOES_WHATSAPP,
     ATENDIMENTOS_HUMANOS,
     EVENTOS_PROCESSADOS,
-    FILA_ATENDIMENTO,
     LOCK_MODO_HUMANO,
-    LOCK_FILA,
 )
-from core.config import MODO_HUMANO_FILE, FILA_ATENDIMENTO_FILE, TTL_SESSAO, TTL_EVENTO
+from core.config import MODO_HUMANO_FILE, TTL_SESSAO, TTL_EVENTO
 
 
 def carregar_modo_humano():
@@ -22,20 +21,9 @@ def salvar_modo_humano_em_arquivo():
     salvar_json_seguro(MODO_HUMANO_FILE, ATENDIMENTOS_HUMANOS)
 
 
-def carregar_fila():
-    return carregar_json_seguro(FILA_ATENDIMENTO_FILE, [])
-
-
-def salvar_fila():
-    salvar_json_seguro(FILA_ATENDIMENTO_FILE, FILA_ATENDIMENTO)
-
-
 def inicializar_estado_whatsapp():
     ATENDIMENTOS_HUMANOS.clear()
     ATENDIMENTOS_HUMANOS.update(carregar_modo_humano())
-
-    FILA_ATENDIMENTO.clear()
-    FILA_ATENDIMENTO.extend(carregar_fila())
 
 
 def ativar_modo_humano(numero):
@@ -62,46 +50,81 @@ def esta_em_modo_humano(numero):
     return bool(info and info.get("ativo"))
 
 
-def atualizar_posicoes_fila():
-    for i, item in enumerate(FILA_ATENDIMENTO, start=1):
-        item["posicao"] = i
+def listar_fila_atendimento():
+    fila = FilaAtendimento.query.filter_by(
+        status="aguardando"
+    ).order_by(
+        FilaAtendimento.criado_em.asc(),
+        FilaAtendimento.id.asc()
+    ).all()
+
+    for posicao, item in enumerate(fila, start=1):
+        item.posicao = posicao
+
+    return fila
 
 
 def esta_na_fila(numero):
     numero = limpar_numero(numero)
-    return any(item["numero"] == numero for item in FILA_ATENDIMENTO)
+    return FilaAtendimento.query.filter_by(
+        numero=numero,
+        status="aguardando"
+    ).first() is not None
+
+
+def numero_ignorado_pela_ia(numero):
+    numero_normalizado = normalizar_telefone_brasil(numero)
+
+    if not numero_normalizado:
+        numero_normalizado = limpar_numero(numero)
+
+    if not numero_normalizado:
+        return False
+
+    return NumeroIgnoradoIA.query.filter_by(
+        numero=numero_normalizado,
+        ativo=True
+    ).first() is not None
 
 
 def adicionar_na_fila(numero, nome="", assunto=""):
     numero = limpar_numero(numero)
 
-    with LOCK_FILA:
-        for item in FILA_ATENDIMENTO:
-            if item["numero"] == numero:
-                if nome:
-                    item["nome"] = nome
-                if assunto:
-                    item["assunto"] = assunto
-                atualizar_posicoes_fila()
-                salvar_fila()
-                return item["posicao"]
+    fila_existente = FilaAtendimento.query.filter_by(
+        numero=numero,
+        status="aguardando"
+    ).first()
 
-        FILA_ATENDIMENTO.append({
-            "numero": numero,
-            "nome": nome,
-            "assunto": assunto,
-            "posicao": len(FILA_ATENDIMENTO) + 1,
-            "entrada_em": time()
-        })
+    if fila_existente:
+        if nome:
+            fila_existente.nome = nome
 
-        atualizar_posicoes_fila()
-        salvar_fila()
-        return FILA_ATENDIMENTO[-1]["posicao"]
+        if assunto:
+            fila_existente.assunto = assunto
+
+        db.session.commit()
+
+    else:
+        novo = FilaAtendimento(
+            numero=numero,
+            nome=nome,
+            assunto=assunto,
+            status="aguardando"
+        )
+
+        db.session.add(novo)
+        db.session.commit()
+
+    for i, item in enumerate(listar_fila_atendimento(), start=1):
+        if item.numero == numero:
+            return i
+
+    return 1
 
 
 def notificar_subida_fila(fila_antes, fila_depois):
-    posicoes_antes = {item["numero"]: item["posicao"] for item in fila_antes}
-    posicoes_depois = {item["numero"]: item["posicao"] for item in fila_depois}
+    posicoes_antes = {item.numero: item.posicao for item in fila_antes}
+    posicoes_depois = {item.numero: item.posicao for item in fila_depois}
 
     for numero, nova_posicao in posicoes_depois.items():
         posicao_antiga = posicoes_antes.get(numero)
@@ -119,40 +142,42 @@ def notificar_subida_fila(fila_antes, fila_depois):
 
 
 def notificar_fila_vazia():
-    if len(FILA_ATENDIMENTO) == 0:
+    if total_na_fila() == 0:
         print("Fila vazia no momento.")
 
 
 def remover_da_fila(numero):
     numero = limpar_numero(numero)
+    fila_antes = listar_fila_atendimento()
 
-    with LOCK_FILA:
-        fila_antes = [dict(item) for item in FILA_ATENDIMENTO]
+    fila = FilaAtendimento.query.filter_by(
+        numero=numero,
+        status="aguardando"
+    ).first()
 
-        FILA_ATENDIMENTO[:] = [
-            item for item in FILA_ATENDIMENTO
-            if item["numero"] != numero
-        ]
+    if fila:
+        fila.status = "finalizado"
+        db.session.commit()
 
-        atualizar_posicoes_fila()
-        salvar_fila()
-
-        fila_depois = [dict(item) for item in FILA_ATENDIMENTO]
-
-    notificar_subida_fila(fila_antes, fila_depois)
-    notificar_fila_vazia()
+        fila_depois = listar_fila_atendimento()
+        notificar_subida_fila(fila_antes, fila_depois)
+        notificar_fila_vazia()
 
 
 def obter_posicao_fila(numero):
     numero = limpar_numero(numero)
-    for item in FILA_ATENDIMENTO:
-        if item["numero"] == numero:
-            return item["posicao"]
+
+    for i, item in enumerate(listar_fila_atendimento(), start=1):
+        if item.numero == numero:
+            return i
+
     return None
 
 
 def total_na_fila():
-    return len(FILA_ATENDIMENTO)
+    return FilaAtendimento.query.filter_by(
+        status="aguardando"
+    ).count()
 
 
 def obter_sessao(numero):

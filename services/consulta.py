@@ -1,7 +1,7 @@
 import os
 import requests
 
-from datetime import datetime
+from datetime import datetime, timezone
 from services.tribunal_detector import detectar_tribunal, obter_info_tribunal
 
 DATAJUD_BASE = "https://api-publica.datajud.cnj.jus.br"
@@ -18,7 +18,10 @@ def converter_data(data_str):
         return None
 
     try:
-        return datetime.fromisoformat(data_str.replace("Z", "+00:00"))
+        data = datetime.fromisoformat(data_str.replace("Z", "+00:00"))
+        if data.tzinfo:
+            data = data.astimezone(timezone.utc).replace(tzinfo=None)
+        return data
     except Exception:
         return None
 
@@ -100,7 +103,7 @@ def extrair_movimentacao(hit):
                 or movimento_recente.get("codigo")
                 or "Movimentação localizada"
             )
-            data_movimentacao = (
+            data_movimentacao = converter_data(
                 movimento_recente.get("dataHora")
                 or movimento_recente.get("data")
             )

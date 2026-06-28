@@ -1,4 +1,6 @@
-from flask import redirect, url_for
+import os
+
+from flask import abort, redirect, url_for
 from werkzeug.security import generate_password_hash
 
 from app import app
@@ -11,6 +13,9 @@ from datetime import datetime as dt, timedelta
 
 @app.route("/seed")
 def seed():
+    if os.getenv("ALLOW_SEED", "").lower() != "true":
+        abort(404)
+
     db.drop_all()
     db.create_all()
 

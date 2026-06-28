@@ -4,7 +4,7 @@
 <div class="page-header">
     <h2>👥 Clientes</h2>
 
-    <a href="{{ url_for('novo_cliente') }}" class="btn">
+    <a href="{{ url_for('adv.novo_cliente') }}" class="btn">
         ➕ Novo Cliente
     </a>
 </div>
@@ -25,7 +25,7 @@
                     <td>{{ c.nome }}</td>
                     <td>{{ c.cpf }}</td>
                     <td class="acoes-tabela">
-                        <a href="{{ url_for('editar_cliente', id=c.id) }}" class="link">
+                        <a href="{{ url_for('adv.editar_cliente', id=c.id) }}" class="link">
                             ✏️ Editar
                         </a>
                     </td>

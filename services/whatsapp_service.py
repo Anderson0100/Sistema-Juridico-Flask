@@ -10,6 +10,10 @@ INSTANCE = os.getenv("EVOLUTION_INSTANCE")
 
 
 def enviar_mensagem(numero, mensagem):
+    if not API_URL or not API_KEY or not INSTANCE:
+        print("WhatsApp API nÃ£o configurada.")
+        return None
+
     url = f"{API_URL}/message/sendText/{INSTANCE}"
 
     headers = {

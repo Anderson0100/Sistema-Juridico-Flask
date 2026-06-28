@@ -1,6 +1,6 @@
 from flask import request, session, abort
 
-from app import app
+from app import app, csrf
 from core.auth import login_required
 from models import SistemaLog
 from services.db import db
@@ -27,6 +27,7 @@ from whatsapp.helpers import (
     liberar_atendimento_humano,
     extrair_evento_id,
     evento_ja_processado,
+    numero_ignorado_pela_ia,
 )
 from whatsapp.menu import (
     mensagem_menu_principal,
@@ -39,6 +40,7 @@ from whatsapp.menu import (
 
 
 @app.route("/webhook/whatsapp", methods=["POST"])
+@csrf.exempt
 def webhook_whatsapp():
     body = request.get_json(silent=True) or {}
     print("Recebido:", body)
@@ -59,6 +61,10 @@ def webhook_whatsapp():
         msg = data.get("message", {}) or {}
 
         remote_jid = key_data.get("remoteJidAlt", "") or key_data.get("remoteJid", "")
+
+        if "@s.whatsapp.net" not in remote_jid:
+            remote_jid = key_data.get("remoteJid", "") or key_data.get("remoteJidAlt", "")
+
         remote_jid = str(remote_jid or "").split(":")[0]
         from_me = key_data.get("fromMe", False)
 
@@ -97,6 +103,10 @@ def webhook_whatsapp():
             return "ok", 200
 
         numero = limpar_numero(remote_jid.replace("@s.whatsapp.net", "").replace("@lid", ""))
+
+        if numero_ignorado_pela_ia(numero):
+            print(f"IA ignorada para numero cadastrado: {numero}")
+            return "ok", 200
 
         print("NUMERO:", numero)
         print("MENSAGEM:", mensagem)
@@ -664,7 +674,9 @@ def webhook_whatsapp():
         enviar_mensagem(numero, mensagem_menu_principal())
 
     except Exception as e:
-        print("Erro webhook:", repr(e))
+        import traceback
+        print("ERRO NO WEBHOOK:", repr(e))
+        traceback.print_exc()
 
     return "ok", 200
   
@@ -694,4 +706,3 @@ def liberar_modo_humano_rota():
         return {"ok": True, "mensagem": f"Modo humano liberado para {numero}"}, 200
 
     return {"ok": False, "erro": "Não foi possível liberar o modo humano"}, 400
-  

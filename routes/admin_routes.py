@@ -1,8 +1,9 @@
 import os
 import re
-from datetime import date as dt_date
+from datetime import date as dt_date, datetime as dt
 
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from werkzeug.security import generate_password_hash
 
 from core.auth import login_required
 from models import (
@@ -19,12 +20,12 @@ from models import (
     AtendimentoInterno,
     AgendamentoAtendimento,
     RecadoInterno,
+    NumeroIgnoradoIA,
 )
 from services.db import db
 from utils.phone import limpar_numero, normalizar_telefone_brasil
 from utils.logs import log_sistema
-from whatsapp.state import FILA_ATENDIMENTO
-from whatsapp.helpers import liberar_atendimento_humano
+from whatsapp.helpers import liberar_atendimento_humano, listar_fila_atendimento
 
 
 admin_bp = Blueprint("admin", __name__)
@@ -50,7 +51,7 @@ def painel_admin():
 
     historico = SistemaLog.query.order_by(SistemaLog.data.desc()).limit(200).all()
 
-    fila_atendimento = FILA_ATENDIMENTO[:]
+    fila_atendimento = listar_fila_atendimento()
 
     data_filtro = request.args.get("data", "").strip()
     if not data_filtro:
@@ -116,6 +117,211 @@ def admin_passar_proximo_fila():
         flash("Erro ao avançar a fila.", "danger")
 
     return redirect(url_for("admin.painel_admin"))
+
+
+@admin_bp.route("/admin/usuarios")
+@login_required("admin")
+def admin_usuarios():
+    advogados = Usuario.query.filter_by(tipo="advogado").order_by(
+        Usuario.nome.asc()
+    ).all()
+
+    mapa_processos = {}
+    for advogado in advogados:
+        mapa_processos[advogado.id] = Processo.query.filter_by(
+            advogado_id=advogado.id
+        ).count()
+
+    return render_template(
+        "admin_usuarios.html",
+        advogados=advogados,
+        mapa_processos=mapa_processos,
+    )
+
+
+@admin_bp.route("/admin/usuarios/<int:id>/editar", methods=["GET", "POST"])
+@login_required("admin")
+def admin_editar_advogado(id):
+    advogado = Usuario.query.filter_by(id=id, tipo="advogado").first_or_404()
+
+    if request.method == "POST":
+        nome = request.form.get("nome", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        telefone = request.form.get("telefone", "").strip()
+
+        if not nome or not email:
+            flash("Nome e email sao obrigatorios.", "danger")
+            return redirect(url_for("admin.admin_editar_advogado", id=id))
+
+        email_em_uso = Usuario.query.filter(
+            Usuario.email == email,
+            Usuario.id != advogado.id
+        ).first()
+
+        if email_em_uso:
+            flash("Ja existe um usuario com esse email.", "danger")
+            return redirect(url_for("admin.admin_editar_advogado", id=id))
+
+        telefone_normalizado = normalizar_telefone_brasil(telefone) if telefone else ""
+
+        if telefone and not telefone_normalizado:
+            flash("Telefone invalido.", "danger")
+            return redirect(url_for("admin.admin_editar_advogado", id=id))
+
+        advogado.nome = nome
+        advogado.email = email
+        advogado.telefone = telefone_normalizado or None
+
+        db.session.commit()
+
+        log_sistema(f"Admin editou advogado {advogado.nome}")
+        flash("Advogado atualizado com sucesso.", "success")
+        return redirect(url_for("admin.admin_usuarios"))
+
+    return render_template("admin_usuario_editar.html", advogado=advogado)
+
+
+@admin_bp.route("/admin/usuarios/<int:id>/senha", methods=["GET", "POST"])
+@login_required("admin")
+def admin_alterar_senha_advogado(id):
+    advogado = Usuario.query.filter_by(id=id, tipo="advogado").first_or_404()
+
+    if request.method == "POST":
+        senha = request.form.get("senha", "")
+        confirmar_senha = request.form.get("confirmar_senha", "")
+
+        if not senha:
+            flash("Informe a nova senha.", "danger")
+            return redirect(url_for("admin.admin_alterar_senha_advogado", id=id))
+
+        if senha != confirmar_senha:
+            flash("A confirmacao da senha nao confere.", "danger")
+            return redirect(url_for("admin.admin_alterar_senha_advogado", id=id))
+
+        advogado.senha = generate_password_hash(senha)
+        db.session.commit()
+
+        log_sistema(f"Admin alterou a senha do advogado {advogado.nome}")
+        flash("Senha alterada com sucesso.", "success")
+        return redirect(url_for("admin.admin_usuarios"))
+
+    return render_template("admin_usuario_senha.html", advogado=advogado)
+
+
+@admin_bp.route("/admin/ia/ignorados")
+@login_required("admin")
+def admin_numeros_ignorados_ia():
+    numeros = NumeroIgnoradoIA.query.order_by(
+        NumeroIgnoradoIA.ativo.desc(),
+        NumeroIgnoradoIA.nome.asc()
+    ).all()
+
+    return render_template("admin_ia_ignorados.html", numeros=numeros)
+
+
+@admin_bp.route("/admin/ia/ignorados/novo", methods=["POST"])
+@login_required("admin")
+def admin_novo_numero_ignorado_ia():
+    nome = request.form.get("nome", "").strip()
+    numero = request.form.get("numero", "").strip()
+    ativo = request.form.get("ativo") == "on"
+
+    if not nome or not numero:
+        flash("Nome e numero sao obrigatorios.", "danger")
+        return redirect(url_for("admin.admin_numeros_ignorados_ia"))
+
+    numero_normalizado = normalizar_telefone_brasil(numero)
+
+    if not numero_normalizado:
+        flash("Numero de WhatsApp invalido.", "danger")
+        return redirect(url_for("admin.admin_numeros_ignorados_ia"))
+
+    if NumeroIgnoradoIA.query.filter_by(numero=numero_normalizado).first():
+        flash("Esse numero ja esta cadastrado na lista.", "danger")
+        return redirect(url_for("admin.admin_numeros_ignorados_ia"))
+
+    ignorado = NumeroIgnoradoIA(
+        nome=nome,
+        numero=numero_normalizado,
+        ativo=ativo,
+    )
+
+    db.session.add(ignorado)
+    db.session.commit()
+
+    log_sistema(f"Admin adicionou numero ignorado pela IA: {numero_normalizado}")
+    flash("Numero adicionado com sucesso.", "success")
+    return redirect(url_for("admin.admin_numeros_ignorados_ia"))
+
+
+@admin_bp.route("/admin/ia/ignorados/<int:id>/editar", methods=["GET", "POST"])
+@login_required("admin")
+def admin_editar_numero_ignorado_ia(id):
+    ignorado = NumeroIgnoradoIA.query.get_or_404(id)
+
+    if request.method == "POST":
+        nome = request.form.get("nome", "").strip()
+        numero = request.form.get("numero", "").strip()
+        ativo = request.form.get("ativo") == "on"
+
+        if not nome or not numero:
+            flash("Nome e numero sao obrigatorios.", "danger")
+            return redirect(url_for("admin.admin_editar_numero_ignorado_ia", id=id))
+
+        numero_normalizado = normalizar_telefone_brasil(numero)
+
+        if not numero_normalizado:
+            flash("Numero de WhatsApp invalido.", "danger")
+            return redirect(url_for("admin.admin_editar_numero_ignorado_ia", id=id))
+
+        numero_em_uso = NumeroIgnoradoIA.query.filter(
+            NumeroIgnoradoIA.numero == numero_normalizado,
+            NumeroIgnoradoIA.id != ignorado.id
+        ).first()
+
+        if numero_em_uso:
+            flash("Esse numero ja esta cadastrado na lista.", "danger")
+            return redirect(url_for("admin.admin_editar_numero_ignorado_ia", id=id))
+
+        ignorado.nome = nome
+        ignorado.numero = numero_normalizado
+        ignorado.ativo = ativo
+
+        db.session.commit()
+
+        log_sistema(f"Admin editou numero ignorado pela IA: {numero_normalizado}")
+        flash("Numero atualizado com sucesso.", "success")
+        return redirect(url_for("admin.admin_numeros_ignorados_ia"))
+
+    return render_template("admin_ia_ignorado_editar.html", ignorado=ignorado)
+
+
+@admin_bp.route("/admin/ia/ignorados/<int:id>/toggle", methods=["POST"])
+@login_required("admin")
+def admin_toggle_numero_ignorado_ia(id):
+    ignorado = NumeroIgnoradoIA.query.get_or_404(id)
+    ignorado.ativo = not ignorado.ativo
+
+    db.session.commit()
+
+    status = "ativou" if ignorado.ativo else "desativou"
+    log_sistema(f"Admin {status} numero ignorado pela IA: {ignorado.numero}")
+    flash("Status do numero atualizado.", "success")
+    return redirect(url_for("admin.admin_numeros_ignorados_ia"))
+
+
+@admin_bp.route("/admin/ia/ignorados/<int:id>/excluir", methods=["POST"])
+@login_required("admin")
+def admin_excluir_numero_ignorado_ia(id):
+    ignorado = NumeroIgnoradoIA.query.get_or_404(id)
+    numero = ignorado.numero
+
+    db.session.delete(ignorado)
+    db.session.commit()
+
+    log_sistema(f"Admin excluiu numero ignorado pela IA: {numero}")
+    flash("Numero excluido com sucesso.", "success")
+    return redirect(url_for("admin.admin_numeros_ignorados_ia"))
 
 
 @admin_bp.route("/admin/agendamentos/novo", methods=["POST"])
@@ -230,6 +436,17 @@ def admin_novo_atendimento():
             telefone=telefone_normalizado
         ).first()
 
+    data_hora = None
+    if data_agendada:
+        try:
+            data_hora = dt.strptime(
+                f"{data_agendada} {hora_agendada or '00:00'}",
+                "%Y-%m-%d %H:%M"
+            )
+        except ValueError:
+            flash("Data ou hora invÃ¡lida.", "danger")
+            return redirect(url_for("admin.painel_admin"))
+
     atendimento = AtendimentoInterno(
         cliente_id=cliente.id if cliente else None,
         advogado_id=advogado_id if advogado_id else None,
@@ -239,8 +456,7 @@ def admin_novo_atendimento():
         assunto=assunto,
         observacao=observacao,
         tipo=tipo,
-        data_agendada=data_agendada or None,
-        hora_agendada=hora_agendada or None,
+        data_movimentacao=data_hora,
         status="Pendente"
     )
 
@@ -338,8 +554,6 @@ def admin_excluir_recado(id):
 @admin_bp.route("/admin/advogado/novo", methods=["POST"])
 @login_required("admin")
 def admin_novo_advogado():
-    from werkzeug.security import generate_password_hash
-
     nome = request.form["nome"]
     email = request.form["email"].strip().lower()
     senha = generate_password_hash(request.form["senha"])
@@ -364,10 +578,10 @@ def admin_novo_advogado():
     return redirect(url_for("admin.painel_admin"))
 
 
-@admin_bp.route("/admin/advogado/<int:id>/toggle")
+@admin_bp.route("/admin/advogado/<int:id>/toggle", methods=["POST"])
 @login_required("admin")
 def admin_toggle_advogado(id):
-    adv = Usuario.query.get_or_404(id)
+    adv = Usuario.query.filter_by(id=id, tipo="advogado").first_or_404()
     adv.ativo = not adv.ativo
 
     db.session.commit()
@@ -463,4 +677,4 @@ def admin_excluir_processo(id):
 
     log_sistema(f"Admin excluiu processo {processo.numero}")
     flash("Processo excluído com sucesso", "success")
-    return redirect(url_for("admin.painel_admin"))
+    return redirect(request.referrer or url_for("admin.admin_usuarios"))

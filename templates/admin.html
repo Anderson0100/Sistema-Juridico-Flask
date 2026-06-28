@@ -28,6 +28,17 @@
 
 <hr />
 
+<h3>Administração</h3>
+
+<p>
+  <a class="btn" href="{{ url_for('admin.admin_usuarios') }}">Usuários</a>
+  <a class="btn btn-secondary" href="{{ url_for('admin.admin_numeros_ignorados_ia') }}">
+    Números ignorados pela IA
+  </a>
+</p>
+
+<hr />
+
 <h3>📅 Agenda de Atendimentos do Dia</h3>
 
 <form method="GET" action="{{ url_for('admin.painel_admin') }}" style="margin-bottom: 20px;">
@@ -69,6 +80,7 @@
           action="{{ url_for('admin.admin_atualizar_status_agendamento', id=item.id) }}"
           style="margin-bottom: 8px;"
         >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <select name="status">
             <option value="Marcado" {% if item.status == 'Marcado' %}selected{% endif %}>Marcado</option>
             <option value="Confirmado" {% if item.status == 'Confirmado' %}selected{% endif %}>Confirmado</option>
@@ -83,6 +95,7 @@
           action="{{ url_for('admin.admin_excluir_agendamento', id=item.id) }}"
           onsubmit="return confirm('Deseja realmente excluir este agendamento?');"
         >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button class="btn btn-danger" type="submit">Excluir</button>
         </form>
       </td>
@@ -135,6 +148,7 @@
 <h3>👥 Novo agendamento presencial</h3>
 
 <form method="POST" action="{{ url_for('admin.admin_novo_agendamento') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <input name="nome_cliente" placeholder="Nome do cliente" required />
   <input name="telefone" placeholder="Telefone" />
   <input name="assunto" placeholder="Assunto" />
@@ -163,6 +177,7 @@
 <h3>📞 Novo recado / aviso interno</h3>
 
 <form method="POST" action="{{ url_for('admin.admin_novo_recado') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <input name="nome_cliente" placeholder="Nome do cliente" required />
   <input name="telefone" placeholder="Telefone" />
   <input name="assunto" placeholder="Assunto" required />
@@ -223,6 +238,7 @@
         action="{{ url_for('admin.admin_atualizar_status_recado', id=item.id) }}"
         style="margin-bottom: 8px;"
       >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <select name="status">
           <option value="Pendente" {% if item.status == 'Pendente' %}selected{% endif %}>Pendente</option>
           <option value="Lido" {% if item.status == 'Lido' %}selected{% endif %}>Lido</option>
@@ -236,6 +252,7 @@
         action="{{ url_for('admin.admin_excluir_recado', id=item.id) }}"
         onsubmit="return confirm('Deseja realmente excluir este recado?');"
       >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button class="btn btn-danger" type="submit">Excluir</button>
       </form>
     </td>
@@ -253,6 +270,7 @@
 <h3>👨‍⚖️ Criar Advogado</h3>
 
 <form method="POST" action="{{ url_for('admin.admin_novo_advogado') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <input name="nome" placeholder="Nome" required />
   <input name="email" placeholder="Email" required />
   <input name="senha" placeholder="Senha inicial" required />
@@ -279,9 +297,14 @@
     <td>{{ mapa_processos[a.id] }}</td>
     <td>{{ "Ativo" if a.ativo else "Bloqueado" }}</td>
     <td>
-      <a href="{{ url_for('admin.admin_toggle_advogado', id=a.id) }}" class="btn btn-secondary">
-        {% if a.ativo %}Bloquear{% else %}Ativar{% endif %}
-      </a>
+      <a href="{{ url_for('admin.admin_editar_advogado', id=a.id) }}" class="btn btn-secondary">Editar</a>
+      <a href="{{ url_for('admin.admin_alterar_senha_advogado', id=a.id) }}" class="btn btn-secondary">Senha</a>
+      <form method="POST" action="{{ url_for('admin.admin_toggle_advogado', id=a.id) }}" style="display:inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-secondary" type="submit">
+          {% if a.ativo %}Bloquear{% else %}Ativar{% endif %}
+        </button>
+      </form>
     </td>
   </tr>
   {% endfor %}
@@ -308,6 +331,7 @@
     <td>{{ p.status }}</td>
     <td>
       <form method="POST" action="{{ url_for('admin.admin_excluir_processo', id=p.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button class="btn btn-danger">Excluir</button>
       </form>
     </td>
@@ -340,6 +364,7 @@
         action="{{ url_for('admin.admin_excluir_cliente', id=c.id) }}"
         style="display: inline"
       >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button class="btn btn-danger">Excluir</button>
       </form>
     </td>
@@ -374,6 +399,7 @@
         action="{{ url_for('admin.admin_passar_proximo_fila') }}"
         style="display: inline"
       >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="numero" value="{{ item.numero }}" />
         <button class="btn btn-success">✅ Passar próximo</button>
       </form>

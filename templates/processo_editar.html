@@ -4,6 +4,7 @@
 <h2>Editar Processo</h2>
 
 <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <select name="status">
     <option {{ 'selected' if processo.status=='Em andamento' }}>Em andamento</option>
     <option {{ 'selected' if processo.status=='Concluído' }}>Concluído</option>

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<h2>Números Ignorados pela IA</h2>
+
+<p>
+  <a class="btn btn-secondary" href="{{ url_for('admin.painel_admin') }}">Voltar ao painel</a>
+</p>
+
+<h3>Novo número</h3>
+
+<form method="POST" action="{{ url_for('admin.admin_novo_numero_ignorado_ia') }}" class="form-card">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <label>Nome</label>
+  <input type="text" name="nome" required>
+
+  <label>Número WhatsApp</label>
+  <input type="text" name="numero" placeholder="DDD + número ou 55 + DDD + número" required>
+
+  <label>
+    <input type="checkbox" name="ativo" checked>
+    Ativo
+  </label>
+
+  <button class="btn" type="submit">Adicionar</button>
+</form>
+
+<hr>
+
+{% if numeros %}
+<table>
+  <tr>
+    <th>Nome</th>
+    <th>Número</th>
+    <th>Status</th>
+    <th>Ações</th>
+  </tr>
+
+  {% for item in numeros %}
+  <tr>
+    <td>{{ item.nome }}</td>
+    <td>{{ item.numero }}</td>
+    <td>{{ "Ativo" if item.ativo else "Inativo" }}</td>
+    <td>
+      <a class="btn btn-secondary" href="{{ url_for('admin.admin_editar_numero_ignorado_ia', id=item.id) }}">
+        Editar
+      </a>
+
+      <form method="POST" action="{{ url_for('admin.admin_toggle_numero_ignorado_ia', id=item.id) }}" style="display:inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-secondary" type="submit">
+          {% if item.ativo %}Desativar{% else %}Ativar{% endif %}
+        </button>
+      </form>
+
+      <form
+        method="POST"
+        action="{{ url_for('admin.admin_excluir_numero_ignorado_ia', id=item.id) }}"
+        style="display:inline"
+        onsubmit="return confirm('Excluir este número da lista?')"
+      >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-danger" type="submit">Excluir</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<div class="card">
+  <p>Nenhum número cadastrado.</p>
+</div>
+{% endif %}
+
+{% endblock %}

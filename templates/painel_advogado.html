@@ -198,6 +198,7 @@
           method="POST"
           action="{{ url_for('adv.advogado_atualizar_status_agendamento', id=item.id) }}"
         >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <select name="status">
             <option value="Marcado" {% if item.status == 'Marcado' %}selected{% endif %}>Marcado</option>
             <option value="Confirmado" {% if item.status == 'Confirmado' %}selected{% endif %}>Confirmado</option>
@@ -275,6 +276,7 @@
           method="POST"
           action="{{ url_for('adv.advogado_atualizar_status_recado', id=item.id) }}"
         >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <select name="status">
             <option value="Pendente" {% if item.status == 'Pendente' %}selected{% endif %}>Pendente</option>
             <option value="Lido" {% if item.status == 'Lido' %}selected{% endif %}>Lido</option>
@@ -303,7 +305,7 @@
       <br />
       <small>
         Processo:
-        <a href="{{ url_for('adv.detalhe_processo', id=msg.processo.id) }}">
+        <a href="{{ url_for('detalhe_processo', id=msg.processo.id) }}">
           {{ msg.processo.numero }}
         </a>
       </small>

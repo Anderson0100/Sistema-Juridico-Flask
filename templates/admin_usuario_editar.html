@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<h2>Editar Advogado</h2>
+
+<form method="POST" class="form-card">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <label>Nome</label>
+  <input type="text" name="nome" value="{{ advogado.nome or '' }}" required>
+
+  <label>Email</label>
+  <input type="email" name="email" value="{{ advogado.email or '' }}" required>
+
+  <label>Telefone / WhatsApp</label>
+  <input type="text" name="telefone" value="{{ advogado.telefone or '' }}" placeholder="DDD + número">
+
+  <button class="btn" type="submit">Salvar alterações</button>
+  <a class="btn btn-secondary" href="{{ url_for('admin.admin_usuarios') }}">Cancelar</a>
+</form>
+
+{% endblock %}

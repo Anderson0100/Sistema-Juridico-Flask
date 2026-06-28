@@ -87,8 +87,10 @@ def google_login():
 @login_required("advogado")
 def google_callback():
     code = request.args.get("code")
+    state = request.args.get("state")
+    esperado = session.pop("google_oauth_state", None)
 
-    if not code:
+    if not code or not state or state != esperado:
         return "Erro ao autenticar com Google", 400
 
     usuario_id = session["usuario_id"]

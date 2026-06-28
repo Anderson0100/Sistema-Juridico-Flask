@@ -4,6 +4,7 @@
 <h2>🖍️ Editar Cliente</h2>
 
 <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>Nome do Cliente</label>
     <input type="text" name="nome" value="{{ cliente.nome or '' }}" required>
 
@@ -31,7 +32,7 @@
         {% if session.get("usuario_tipo") == "admin" %}
         <a href="{{ url_for('admin.painel_admin') }}" class="btn btn-secondary">⬅ Voltar</a>
         {% else %}
-        <a href="{{ url_for('clientes_advogado') }}" class="btn btn-secondary">⬅ Voltar</a>
+        <a href="{{ url_for('adv.clientes_advogado') }}" class="btn btn-secondary">⬅ Voltar</a>
         {% endif %}
     </div>
 </form>

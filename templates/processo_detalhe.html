@@ -90,23 +90,29 @@
     {% if session.usuario_tipo == "admin" or session.usuario_id == obs.advogado_id %}
     <form method="POST" action="{{ url_for('excluir_observacao', id=obs.id) }}"
           onsubmit="return confirm('Deseja excluir esta observação?');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button class="btn btn-danger">Excluir observação</button>
     </form>
     {% endif %}
 </div>
 {% endfor %}
 
+{% if pode_editar %}
 <form method="POST" action="{{ url_for('adicionar_observacao', id=processo.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <textarea name="texto" required></textarea>
     <button class="btn">Adicionar observação</button>
 </form>
+{% endif %}
 
 <hr>
 
 <!-- EDITAR PROCESSO -->
 <h3>✏️ Atualizar Processo</h3>
 
+{% if pode_editar %}
 <form method="POST" enctype="multipart/form-data" class="form-card">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
     <div class="grid-2">
         <div>
@@ -144,17 +150,21 @@
 
     <button class="btn">💾 Salvar alterações</button>
 </form>
+{% endif %}
 
 <hr>
 
 <!-- PRAZOS -->
 <h3>⏰ Prazos</h3>
 
+{% if pode_editar %}
 <form method="POST" action="{{ url_for('adicionar_prazo', id=processo.id) }}" class="grid-2">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="text" name="titulo" placeholder="Título do prazo" required>
     <input type="date" name="data" required>
     <button class="btn">➕ Adicionar</button>
 </form>
+{% endif %}
 
 <ul class="lista-prazos">
 {% for p in prazos %}
@@ -164,9 +174,12 @@
         {% else %}prazo-futuro{% endif %}">
         <strong>{{ p.titulo }}</strong> - {{ p.data_vencimento.strftime('%d/%m/%Y') }}
 
+        {% if pode_editar %}
         <form method="POST" action="{{ url_for('excluir_prazo', id=p.id) }}" style="display:inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="btn btn-danger btn-sm">🗑</button>
         </form>
+        {% endif %}
     </li>
 {% endfor %}
 </ul>
@@ -203,11 +216,14 @@
         <div>
             <a href="{{ url_for('baixar_pdf', id=a.id) }}" class="btn btn-secondary btn-sm">Baixar</a>
 
+            {% if pode_editar %}
             <form method="POST" action="{{ url_for('excluir_arquivo', id=a.id) }}"
                   style="display:inline;"
                   onsubmit="return confirm('Excluir este arquivo?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button class="btn btn-danger btn-sm">🗑</button>
             </form>
+            {% endif %}
         </div>
     </li>
 {% endfor %}
@@ -219,9 +235,12 @@
 <hr>
 
 <form method="POST"
-      action="{{ url_for('excluir_processo', id=processo.id) }}"
+      action="{{ url_for('admin.admin_excluir_processo', id=processo.id) if session.usuario_tipo == 'admin' else url_for('excluir_processo', id=processo.id) }}"
       onsubmit="return confirm('Tem certeza? Tudo será apagado!')">
+    {% if pode_editar %}
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button class="btn btn-danger">🗑 Excluir Processo</button>
+    {% endif %}
 </form>
 
 {% endblock %}

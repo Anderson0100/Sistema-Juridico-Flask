@@ -19,7 +19,7 @@
             <td>{{ cliente.cpf or '-' }}</td>
             <td>{{ cliente.data_nascimento or '-' }}</td>
             <td>
-                <a href="{{ url_for('editar_cliente', id=cliente.id) }}" class="btn btn-secondary">
+                <a href="{{ url_for('adv.editar_cliente', id=cliente.id) }}" class="btn btn-secondary">
                     ✏️ Editar
                 </a>
             </td>

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<h2>Usuários - Advogados</h2>
+
+<p>
+  <a class="btn btn-secondary" href="{{ url_for('admin.painel_admin') }}">Voltar ao painel</a>
+</p>
+
+{% if advogados %}
+<table>
+  <tr>
+    <th>Nome</th>
+    <th>Email</th>
+    <th>Telefone</th>
+    <th>Processos</th>
+    <th>Status</th>
+    <th>Ações</th>
+  </tr>
+
+  {% for advogado in advogados %}
+  <tr>
+    <td>{{ advogado.nome }}</td>
+    <td>{{ advogado.email }}</td>
+    <td>{{ advogado.telefone or "-" }}</td>
+    <td>{{ mapa_processos[advogado.id] }}</td>
+    <td>{{ "Ativo" if advogado.ativo else "Bloqueado" }}</td>
+    <td>
+      <a class="btn btn-secondary" href="{{ url_for('admin.admin_editar_advogado', id=advogado.id) }}">
+        Editar
+      </a>
+      <a class="btn btn-secondary" href="{{ url_for('admin.admin_alterar_senha_advogado', id=advogado.id) }}">
+        Alterar senha
+      </a>
+      <form method="POST" action="{{ url_for('admin.admin_toggle_advogado', id=advogado.id) }}" style="display:inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-danger" type="submit">
+          {% if advogado.ativo %}Bloquear{% else %}Reativar{% endif %}
+        </button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<div class="card">
+  <p>Nenhum advogado cadastrado.</p>
+</div>
+{% endif %}
+
+{% endblock %}

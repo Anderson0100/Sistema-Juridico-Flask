@@ -28,3 +28,14 @@ def pode_editar_processo(processo):
             and processo.advogado_id == session.get("usuario_id")
         )
     )
+
+
+def pode_ver_processo(processo):
+    tipo = session.get("usuario_tipo")
+    usuario_id = session.get("usuario_id")
+
+    return (
+        tipo == "admin" or
+        (tipo == "advogado" and processo.advogado_id == usuario_id) or
+        (tipo == "cliente" and processo.cliente_id == usuario_id)
+    )

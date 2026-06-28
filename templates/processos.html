@@ -75,6 +75,7 @@
 
                 {% if tipo_usuario == "admin" or p.advogado_id == advogado_logado_id %}
                     <form method="POST" action="{{ url_for('excluir_processo', id=p.id) }}" onsubmit="return confirm('Tem certeza que deseja excluir este processo?')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button class="btn btn-danger">🗑 Excluir</button>
                     </form>
                 {% endif %}
