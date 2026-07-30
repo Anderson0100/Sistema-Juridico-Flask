@@ -42,16 +42,26 @@ jobs:
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
 
-          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          printf '%s' "$DEPLOY_SSH_KEY" | base64 --decode > ~/.ssh/deploy_key
+
+          # Remove caracteres CR do Windows, caso existam.
+          sed -i 's/\r$//' ~/.ssh/deploy_key
+
           chmod 600 ~/.ssh/deploy_key
 
+          # Confirma que o arquivo realmente é uma chave privada válida.
+          ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null
+
           ssh-keyscan -p "$DEPLOY_PORT" -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
 
       - name: Deploy application
         run: |
           set -euo pipefail
 
           ssh \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
             -i ~/.ssh/deploy_key \
             -p "$DEPLOY_PORT" \
             "$DEPLOY_USER@$DEPLOY_HOST" \
@@ -76,7 +86,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-          python -m compileall app.py models.py routes whatsapp services core jobs utils google_calendar.py
+          python -m compileall \
+            app.py \
+            models.py \
+            routes \
+            whatsapp \
+            services \
+            core \
+            jobs \
+            utils \
+            google_calendar.py
 
           ENABLE_SCHEDULER=false python - <<'PY'
           from app import app
